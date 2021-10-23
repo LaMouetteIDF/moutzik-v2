@@ -5,22 +5,30 @@ export class Config {
   @Prop({ required: true })
   playerChannel: string;
 
+  @Prop({ required: true })
+  voiceChannel: string;
+
+  @Prop({ required: true, default: false })
+  voiceChannelLock: boolean;
+
   @Prop({ required: false, default: '' })
   logChannel: string;
 
   @Prop({ required: true, default: false })
   logging: boolean;
 
-  @Prop({ required: true, default: true })
-  allowMute: boolean;
+  // @Prop({ required: true, default: true })
+  // allowMute: boolean;
 
-  @Prop({ required: true, default: true })
-  allowChangeVolume: boolean;
+  // @Prop({ required: true, default: true })
+  // allowChangeVolume: boolean;
 
   constructor() {
+    this.voiceChannel = '';
+    this.voiceChannelLock = false;
     this.logChannel = '';
     this.logging = false;
-    this.allowMute = true;
-    this.allowChangeVolume = true;
+    // this.allowMute = true;
+    // this.allowChangeVolume = true;
   }
 }

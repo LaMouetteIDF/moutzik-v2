@@ -5,7 +5,7 @@ const COMMAND = new SlashCommandBuilder();
 COMMAND.setName('play').setDescription('Lire une piste ou un lien YT');
 
 COMMAND.addStringOption((input) =>
-  input.setName('youtube-URL').setDescription('Lien de vidéo youtube'),
+  input.setName('youtube-url').setDescription('Lien de vidéo youtube'),
 );
 
 COMMAND.addNumberOption((input) =>

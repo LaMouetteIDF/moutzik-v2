@@ -10,9 +10,10 @@ import PlayCommand from './commands/play';
 import AddCommand from './commands/add';
 import RemoveCommand from './commands/remove';
 import StopCommand from './commands/stop';
+import { ConfigModule } from 'src/config/config.module';
 
 @Module({
-  imports: [PlayerModule],
+  imports: [PlayerModule, ConfigModule],
   providers: [
     InteractionsService,
     {

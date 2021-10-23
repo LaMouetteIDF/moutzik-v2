@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule as ConfigModuleNest } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MongooseModule } from '@nestjs/mongoose';
 
@@ -10,10 +10,11 @@ import { InteractionsModule } from './interactions/interactions.module';
 import { PlayerModule } from './player/player.module';
 import { StoreModule } from './store/store.module';
 import { ViewModule } from './view/view.module';
+import { ConfigModule } from './config/config.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModuleNest.forRoot({ isGlobal: true }),
     EventEmitterModule.forRoot({
       // set this to `true` to use wildcards
       wildcard: true,
@@ -56,6 +57,7 @@ import { ViewModule } from './view/view.module';
     ClientModule,
     PlayerModule,
     ViewModule,
+    ConfigModule,
   ],
   providers: [AppService],
 })

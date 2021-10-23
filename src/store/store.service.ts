@@ -4,13 +4,16 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { InjectModel } from '@nestjs/mongoose';
+
 import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+
 import { Guild, GuildDocument } from './schemas/guild.schema';
+import type { GuildConfigItem, GuildItem } from './type';
 
 @Injectable()
 export class StoreService implements OnApplicationBootstrap {
-  private guilds = new Map<string, GuildDocument>();
+  private guilds = new Map<string, GuildItem>();
 
   constructor(
     @InjectModel(Guild.name) private guildModel: Model<GuildDocument>,
@@ -34,14 +37,31 @@ export class StoreService implements OnApplicationBootstrap {
     return this.guilds.values();
   }
 
-  async newItem(guildId: string, channelId: string) {
+  async newItem(guildId: string, textChannelId: string) {
+    if (this.guilds.has(guildId)) {
+      return this.guilds.get(guildId);
+    }
+
     const guildItem = new Guild();
 
     guildItem.guildId = guildId;
-    guildItem.config.playerChannel = channelId;
+    guildItem.config.playerChannel = textChannelId;
 
-    return await new this.guildModel(guildItem).save();
+    const guildSave = await new this.guildModel(guildItem).save();
+    this.guilds.set(guildId, guildSave);
+
+    return this.guilds.get(guildId);
   }
 
-  get;
+  async setConfigOption<K extends keyof GuildConfigItem>(
+    guildId: string,
+    option: K,
+    value: GuildConfigItem[K],
+  ) {
+    const select = `config.${option}`;
+    const i = {};
+    i[select] = value;
+
+    await this.guildModel.updateOne({ guildId }, { $set: i }).exec();
+  }
 }
