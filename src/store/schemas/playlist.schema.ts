@@ -1,4 +1,5 @@
 import { Prop, Schema } from '@nestjs/mongoose';
+import { Track } from './track.schema';
 
 @Schema()
 export class Playlist {
@@ -6,7 +7,7 @@ export class Playlist {
   index: number;
 
   @Prop()
-  tracks: string[];
+  tracks: Track[];
 
   constructor() {
     this.index = 0;

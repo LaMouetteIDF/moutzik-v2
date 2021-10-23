@@ -25,6 +25,7 @@ export class InteractionsService implements OnModuleInit {
     private player: PlayerService,
     private eventEmitter: EventEmitter2,
   ) {}
+
   onModuleInit() {
     this.client.on('ready', async (client) => {
       const clientID = client.user.id;
@@ -61,14 +62,21 @@ export class InteractionsService implements OnModuleInit {
   commandInteraction(interaction: CommandInteraction) {
     const commandGroupName = interaction.options.getSubcommandGroup();
     const subcommand = interaction.options.getSubcommand();
+    const { commandName } = interaction;
 
-    switch (commandGroupName) {
-      case 'player':
-        switch (subcommand) {
-          case 'init':
-            this.player.newGuild(interaction);
-            console.log('called init player');
+    switch (commandName) {
+      case 'config':
+        switch (commandGroupName) {
+          case 'player':
+            switch (subcommand) {
+              case 'init':
+                this.player.newGuild(interaction);
+                console.log('called init player');
+            }
+            break;
         }
+        break;
+      case 'play':
         break;
     }
   }

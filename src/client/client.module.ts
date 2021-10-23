@@ -5,6 +5,7 @@ import { ClientService } from './client.service';
 const CLIENT_OPTIONS: ClientOptions = {
   intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
 };
+
 @Global()
 @Module({
   providers: [
