@@ -3,5 +3,6 @@ import { ViewService } from './view.service';
 
 @Module({
   providers: [ViewService],
+  exports: [ViewService],
 })
 export class ViewModule {}

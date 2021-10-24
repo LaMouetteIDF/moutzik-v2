@@ -5,6 +5,9 @@ export class Config {
   @Prop({ required: true })
   playerChannel: string;
 
+  @Prop({ required: true, default: '' })
+  playerInstanceId: string;
+
   @Prop({ required: true })
   voiceChannel: string;
 
@@ -24,6 +27,7 @@ export class Config {
   // allowChangeVolume: boolean;
 
   constructor() {
+    this.playerInstanceId = '';
     this.voiceChannel = '';
     this.voiceChannelLock = false;
     this.logChannel = '';

@@ -3,7 +3,12 @@ import { ClientOptions, Intents } from 'discord.js';
 import { ClientService } from './client.service';
 
 const CLIENT_OPTIONS: ClientOptions = {
-  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
+  intents: [
+    Intents.FLAGS.GUILDS,
+    Intents.FLAGS.GUILD_MESSAGES,
+    Intents.FLAGS.GUILD_VOICE_STATES,
+    Intents.FLAGS.GUILD_MEMBERS,
+  ],
 };
 
 @Global()

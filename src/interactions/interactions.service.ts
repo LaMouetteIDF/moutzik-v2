@@ -57,16 +57,16 @@ export class InteractionsService implements OnModuleInit {
       if (interaction.isButton()) this.buttonInteraction(interaction);
     });
     this.interactionReady = true;
-    this.eventEmitter.emit('app.ready');
+    // this.eventEmitter.emit('player.ready');
   }
 
   commandInteraction(interaction: CommandInteraction) {
-    const commandGroupName = interaction.options.getSubcommandGroup();
-    const subcommand = interaction.options.getSubcommand();
     const { commandName } = interaction;
 
     switch (commandName) {
       case 'config':
+        const commandGroupName = interaction.options.getSubcommandGroup();
+        const subcommand = interaction.options.getSubcommand();
         switch (commandGroupName) {
           case 'player':
             switch (subcommand) {
@@ -81,6 +81,13 @@ export class InteractionsService implements OnModuleInit {
         }
         break;
       case 'play':
+        this.player.PlayCommand(interaction);
+        break;
+      case 'add':
+        break;
+      case 'remove':
+        break;
+      case 'stop':
         break;
     }
   }

@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { CommandInteraction } from 'discord.js';
+import { PlayerService } from 'src/player/player.service';
 import { StoreService } from 'src/store/store.service';
 import { GuildConfigItem } from 'src/store/type';
 
 @Injectable()
 export class ConfigService {
-  constructor(private store: StoreService) {}
+  constructor(private store: StoreService, private player: PlayerService) {}
 
   async newGuild(interaction: CommandInteraction) {
     const guildData = await this.store.newItem(
       interaction.guildId,
       interaction.channelId,
     );
-    console.log(guildData);
-    // guildData.config.
+    this.player.newGuildPlayer(guildData);
     interaction.reply('Ok!');
   }
 

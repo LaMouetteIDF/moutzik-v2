@@ -3,3 +3,9 @@ export enum RepeatState {
   ALL,
   ONE,
 }
+
+export enum PlayingState {
+  PLAY,
+  PAUSE,
+  STOP,
+}

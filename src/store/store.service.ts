@@ -30,7 +30,8 @@ export class StoreService implements OnApplicationBootstrap {
 
     // Emit End FAKE
     // A CHANGER !!!!!!!!!!!!!!!
-    this.eventEmitter.emit('player.ready');
+
+    this.eventEmitter.emit('store.ready');
   }
 
   getAll() {
@@ -53,15 +54,19 @@ export class StoreService implements OnApplicationBootstrap {
     return this.guilds.get(guildId);
   }
 
+  get(key: string) {
+    return this.guilds.get(key);
+  }
+
   async setConfigOption<K extends keyof GuildConfigItem>(
     guildId: string,
     option: K,
     value: GuildConfigItem[K],
   ) {
     const select = `config.${option}`;
-    const i = {};
-    i[select] = value;
+    const jsonUpdate = {};
+    jsonUpdate[select] = value;
 
-    await this.guildModel.updateOne({ guildId }, { $set: i }).exec();
+    await this.guildModel.updateOne({ guildId }, { $set: jsonUpdate }).exec();
   }
 }

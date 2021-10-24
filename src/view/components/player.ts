@@ -19,15 +19,14 @@ const MAX_ROW_CHAR = 38;
 export class PlayerEmbedComponents {
   private playerResponse: MessageEmbed;
 
-  constructor() {
-    this.playerResponse = new MessageEmbed();
+  private duration: number;
 
-    this.playerResponse
+  constructor() {
+    this.playerResponse = new MessageEmbed()
       .setColor('DARK_GOLD')
       .setAuthor('Player Next Generation', 'https://i.imgur.com/AfFp7pu.png')
       .setTitle('Aucun Titre')
-      .setDescription(this.getPlaybackDurationToCharString(0, 0))
-      .setThumbnail('https://i.imgur.com/AfFp7pu.png')
+      .setDescription(this.getPlaybackDurationToCharString(0, this.duration))
       .setFields([
         {
           name: "File d'attente",
@@ -35,6 +34,8 @@ export class PlayerEmbedComponents {
           inline: false,
         },
       ]);
+
+    this.duration = 0;
   }
 
   get response() {
@@ -93,5 +94,46 @@ export class PlayerEmbedComponents {
       }
       return elements;
     })()} \`\`\``;
+  }
+
+  setTitle(title: string, url?: string) {
+    this.playerResponse.setTitle(title);
+    if (url) {
+      try {
+        new URL(url);
+        this.playerResponse.setURL(url);
+      } catch (e) {
+        this.playerResponse.setURL('');
+      }
+    }
+  }
+
+  setThumbnail(url: string) {
+    try {
+      new URL(url);
+      this.playerResponse.setThumbnail(url);
+    } catch (error) {
+      this.playerResponse.setThumbnail('');
+    }
+  }
+
+  setDuration(duration: number) {
+    this.duration = duration;
+  }
+
+  setPlaybackTime(time: number) {
+    this.playerResponse.setDescription(
+      this.getPlaybackDurationToCharString(time, this.duration),
+    );
+  }
+
+  setNextTracksList(list: string[]) {
+    this.playerResponse.setFields([
+      {
+        name: "File d'attente",
+        value: this.getCharStringWaitingNextTrack(list),
+        inline: false,
+      },
+    ]);
   }
 }
