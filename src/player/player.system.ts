@@ -7,6 +7,7 @@ import {
   joinVoiceChannel,
   createAudioResource,
   createAudioPlayer,
+  getVoiceConnection,
 } from '@discordjs/voice';
 
 import { Readable } from 'stream';
@@ -15,6 +16,7 @@ import { PlayingState } from 'src/utils';
 import { GuildItem } from 'src/store/type';
 import { Track } from 'src/store/schemas/track.schema';
 import { TrackService } from './track.service';
+import { SimplePlayer } from './simple-player';
 
 export interface PlayerSystemEvents {
   PLAY: [];
@@ -42,6 +44,7 @@ export class PlayerSystem extends EventEmitter {
   private _voiceAudioPlayer?: AudioPlayer;
   private _voiceResource?: AudioResource;
   private _voiceStream?: Readable;
+  private _simplePlayer: SimplePlayer;
 
   private _state: PlayingState;
 
@@ -56,32 +59,16 @@ export class PlayerSystem extends EventEmitter {
   ) {
     super();
     this._state = PlayingState.STOP;
+    this._simplePlayer = new SimplePlayer(this.guildId, this.trackService);
   }
 
   get currentVoiceChannelId(): string | undefined {
-    return this._voiceConnection
-      ? this._voiceConnection.joinConfig.channelId
-      : undefined;
+    const connection = getVoiceConnection(this.guildId);
+    return connection ? connection.joinConfig.channelId : undefined;
   }
 
-  get currentTrack() {
-    return this._currentTrack;
-  }
-
-  get playbackTime() {
-    const playbackTime = this._voiceResource?.playbackDuration;
-    if (!playbackTime) return 0;
-    return Math.ceil(playbackTime / 1000);
-  }
-
-  private _kill() {
-    this._voiceStream?.destroy();
-    this._voiceAudioPlayer?.stop();
-    this._voiceConnection?.destroy();
-    delete this._voiceConnection;
-    delete this._voiceAudioPlayer;
-    delete this._voiceResource;
-    delete this._voiceStream;
+  get player(): SimplePlayer {
+    return this._simplePlayer;
   }
 
   async connectToChannel(channelId: Snowflake): Promise<boolean> {
@@ -115,26 +102,18 @@ export class PlayerSystem extends EventEmitter {
 
   async playWithTrack(track: Track) {
     try {
-      const stream = await this.trackService.getStream(track);
-      const ressource = createAudioResource(stream);
-      const audioPlayer = createAudioPlayer();
-      if (!this._voiceConnection) throw new Error('No found voice connection');
-      this._voiceConnection.subscribe(audioPlayer);
-      audioPlayer.play(ressource);
-      this._currentTrack = track;
+      if (!this._simplePlayer.play(track)) {
+        throw new Error('Player not work !');
+      }
       this.emit('PLAY');
-      this._voiceStream = stream;
-      this._voiceResource = ressource;
-      this._voiceAudioPlayer = audioPlayer;
     } catch (error) {
       console.error(error);
-      this._kill();
       this.emit('STOP');
     }
   }
 
   stop() {
-    this._kill();
+    this._simplePlayer.stop();
     this.emit('STOP');
   }
 }

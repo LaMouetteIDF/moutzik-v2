@@ -63,15 +63,16 @@ export class ViewSystem {
 
     let ephenalTimer: NodeJS.Timer;
 
-    this.guildPlayer.on('PLAY', () => {
+    this.guildPlayer.player.on('play', (track) => {
       clearInterval(this.timer);
-      const currentTack = this.guildPlayer.currentTrack;
-      this.guildView.player.setTitle(currentTack.title, currentTack.url);
-      this.guildView.player.setDuration(currentTack.duration);
-      this.guildView.player.setThumbnail(currentTack.thumbnail);
+      // const currentTack = this.guildPlayer.currentTrack;
+      const player = this.guildPlayer.player;
+      this.guildView.player.setTitle(track.title, track.url);
+      this.guildView.player.setDuration(track.duration);
+      this.guildView.player.setThumbnail(track.thumbnail);
       this.update();
       ephenalTimer = setInterval(
-        () => this.guildView.player.setPlaybackTime(guildPlayer.playbackTime),
+        () => this.guildView.player.setPlaybackTime(player.playbackTime),
         1000,
       );
       this.timer = setInterval(this.update.bind(this), INTERVAL_UPTADE);

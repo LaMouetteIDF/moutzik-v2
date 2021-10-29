@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CommandInteraction } from 'discord.js';
+import { CommandInteraction, TextChannel, VoiceChannel } from 'discord.js';
+import { ConfigSubCommandsNameOption } from 'src/interactions/commands';
 import { PlayerService } from 'src/player/player.service';
 import { StoreService } from 'src/store/store.service';
 import { GuildConfigItem } from 'src/store/type';
@@ -18,11 +19,60 @@ export class ConfigService {
   }
 
   async setConfig(interaction: CommandInteraction) {
-    console.log('totot');
+    const guildItem = this.store.get(interaction.guildId);
 
-    const subcommand =
-      interaction.options.getSubcommand() as keyof GuildConfigItem;
-    const value = interaction.options.getBoolean('boolean', true);
-    this.store.setConfigOption(interaction.guildId, subcommand, value);
+    if (!guildItem)
+      return interaction.reply('Error your guild is not initialized !');
+
+    const subcommand = interaction.options.getSubcommand();
+
+    switch (subcommand) {
+      case ConfigSubCommandsNameOption.PlayerChannel:
+        {
+          const channel = interaction.options.getChannel('channel', true);
+          if (channel instanceof TextChannel) {
+            guildItem.config.playerChannel = channel.id;
+          }
+        }
+        break;
+
+      case ConfigSubCommandsNameOption.VoiceChannel:
+        {
+          const channel = interaction.options.getChannel('channel', true);
+          if (channel instanceof VoiceChannel) {
+            guildItem.config.voiceChannel = channel.id;
+          }
+        }
+        break;
+
+      case ConfigSubCommandsNameOption.VoiceChannelLock:
+        {
+          const value = interaction.options.getBoolean('boolean', true);
+          guildItem.config.voiceChannelLock = value;
+        }
+        break;
+
+      case ConfigSubCommandsNameOption.LogChannel:
+        {
+          const channel = interaction.options.getChannel('channel', true);
+          if (channel instanceof TextChannel) {
+            guildItem.config.logChannel = channel.id;
+          }
+        }
+        break;
+
+      case ConfigSubCommandsNameOption.Logging:
+        {
+          const value = interaction.options.getBoolean('boolean', true);
+          guildItem.config.logging = value;
+        }
+        break;
+    }
+
+    guildItem.markModified('config');
+
+    await guildItem.save();
+
+    interaction.reply('OK !');
   }
 }

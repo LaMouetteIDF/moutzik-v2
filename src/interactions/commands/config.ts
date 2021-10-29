@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
+import { ConfigSubCommandsNameOption } from '../commands';
 
 const COMMAND = new SlashCommandBuilder();
 
@@ -19,7 +20,7 @@ COMMAND.addSubcommandGroup((subcommandGroup) =>
     .setDescription('General options')
     .addSubcommand((subcommand) =>
       subcommand
-        .setName('player-channel')
+        .setName(ConfigSubCommandsNameOption.PlayerChannel)
         .setDescription('Set player view channel')
         .addChannelOption((input) =>
           input
@@ -30,7 +31,7 @@ COMMAND.addSubcommandGroup((subcommandGroup) =>
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName('voice-channel')
+        .setName(ConfigSubCommandsNameOption.VoiceChannel)
         .setDescription('Set voice channel')
         .addChannelOption((input) =>
           input
@@ -41,7 +42,7 @@ COMMAND.addSubcommandGroup((subcommandGroup) =>
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName('voice-channel-lock')
+        .setName(ConfigSubCommandsNameOption.VoiceChannelLock)
         .setDescription('Lock voice channel')
         .addBooleanOption((input) =>
           input
@@ -52,7 +53,7 @@ COMMAND.addSubcommandGroup((subcommandGroup) =>
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName('log-channel')
+        .setName(ConfigSubCommandsNameOption.LogChannel)
         .setDescription('Set logChannel')
         .addChannelOption((input) =>
           input
@@ -63,7 +64,7 @@ COMMAND.addSubcommandGroup((subcommandGroup) =>
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName('logging')
+        .setName(ConfigSubCommandsNameOption.Logging)
         .setDescription('active logging')
         .addBooleanOption((input) =>
           input

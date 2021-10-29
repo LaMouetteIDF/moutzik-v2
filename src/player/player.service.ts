@@ -87,7 +87,8 @@ export class PlayerService {
       const userVoiceChannelId = guildMember.voice.channelId;
 
       if (!userVoiceChannelId) return; // ERREUR À METTRE !!
-      if (!selfVoiceChannelId) guildPlayer.connectToChannel(userVoiceChannelId);
+      if (!selfVoiceChannelId)
+        await guildPlayer.connectToChannel(userVoiceChannelId);
       else if (selfVoiceChannelId !== userVoiceChannelId) return; // ERREUR À METTRE ICI !! L'UTILISATEUR N'EST PAS SUR LE MEME CHANNEL QUE DU PLAYER
 
       guildPlayer.playWithTrack(track);

@@ -51,6 +51,8 @@ export class InteractionsService implements OnModuleInit {
 
   @OnEvent('player.ready')
   eventIteraction() {
+    console.log('titi');
+
     if (this.interactionReady) return;
     this.client.on('interactionCreate', async (interaction) => {
       if (interaction.isCommand()) this.commandInteraction(interaction);
@@ -75,11 +77,12 @@ export class InteractionsService implements OnModuleInit {
                 console.log('called init player');
             }
             break;
-          case 'options':
+          case 'option':
             this.config.setConfig(interaction);
             break;
         }
         break;
+
       case 'play':
         this.player.PlayCommand(interaction);
         break;
