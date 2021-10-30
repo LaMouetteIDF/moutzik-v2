@@ -47,30 +47,20 @@ export class ViewSystem {
 
           this.instancePlayer = playerInstance;
         })
-        .catch(async () => {
-          this.instancePlayer = await playerChannel.send({
-            embeds: this.embeds,
-            components: this.guildView.action.response,
-          });
-        });
-    else
-      playerChannel
-        .send({
-          embeds: this.embeds,
-          components: this.guildView.action.response,
-        })
-        .then((instancePlayer) => (this.instancePlayer = instancePlayer));
+        .catch(() => this.newInstancePlayer());
+    else this.newInstancePlayer();
 
     let ephenalTimer: NodeJS.Timer;
 
-    this.guildPlayer.player.on('play', (track) => {
+    this.guildPlayer.player.on('play', async (track) => {
       clearInterval(this.timer);
       // const currentTack = this.guildPlayer.currentTrack;
       const player = this.guildPlayer.player;
       this.guildView.player.setTitle(track.title, track.url);
       this.guildView.player.setDuration(track.duration);
       this.guildView.player.setThumbnail(track.thumbnail);
-      this.update();
+      this.guildView.player.setPlaybackTime(player.playbackTime);
+      await this.update();
       ephenalTimer = setInterval(
         () => this.guildView.player.setPlaybackTime(player.playbackTime),
         1000,
@@ -91,7 +81,17 @@ export class ViewSystem {
     return embeds;
   }
 
-  update() {
+  private async newInstancePlayer() {
+    this.instancePlayer = await this.playerChannel.send({
+      embeds: this.embeds,
+      components: this.guildView.action.response,
+    });
+    this.guildStore.config.playerInstanceId = this.instancePlayer.id;
+    this.guildStore.markModified('config');
+    this.guildStore.save();
+  }
+
+  async update() {
     if (!this.instancePlayer) {
       console.error(`Instance is not found in guild "${this.guild.name}"`);
       return;
@@ -100,9 +100,13 @@ export class ViewSystem {
       return;
     }
 
-    this.instancePlayer.edit({
-      embeds: this.embeds,
-      components: this.guildView.action.response,
-    });
+    try {
+      await this.instancePlayer.edit({
+        embeds: this.embeds,
+        components: this.guildView.action.response,
+      });
+    } catch (error) {
+      this.newInstancePlayer();
+    }
   }
 }

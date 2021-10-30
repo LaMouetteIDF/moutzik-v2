@@ -1,5 +1,6 @@
 import {
   AudioPlayer,
+  AudioPlayerStatus,
   AudioResource,
   createAudioPlayer,
   createAudioResource,
@@ -8,6 +9,7 @@ import {
 } from '@discordjs/voice';
 import { EventEmitter } from 'events';
 import { Track } from 'src/store/schemas/track.schema';
+import { sleep } from 'src/utils';
 import { Readable } from 'stream';
 import { TrackService } from './track.service';
 
@@ -65,8 +67,6 @@ export class SimplePlayer extends EventEmitter {
 
   private _makePlayer() {
     if (!this._voiceAudioPlayer) {
-      console.log(this.guildId);
-
       const connection = getVoiceConnection(this.guildId);
       if (!connection) throw new Error('Voice connection is not found !');
       this._voiceAudioPlayer = createAudioPlayer();
@@ -77,26 +77,27 @@ export class SimplePlayer extends EventEmitter {
   private async createAudioResource(track: Track) {
     try {
       const stream = await this.trackService.getStream(track);
+      if (this._voiceAudioPlayer.state.status == AudioPlayerStatus.Playing) {
+        this._voiceAudioPlayer.stop();
+        await sleep(500);
+      }
       this._voiceStream?.destroy();
       delete this._voiceStream;
       this._voiceStream = stream;
+      delete this._voiceResource;
       this._voiceResource = createAudioResource(this._voiceStream);
       return this._voiceResource;
     } catch (error) {
-      throw new Error('Impossible to get stream');
+      throw new Error('Stream is not found');
     }
   }
 
   async play(track: Track): Promise<boolean> {
     try {
       this._makePlayer();
-      console.log('PLAY');
-
       this._voiceAudioPlayer.play(await this.createAudioResource(track));
       this.emit('play', track);
     } catch (e) {
-      console.log(e);
-
       return false;
     }
 
