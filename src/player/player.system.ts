@@ -106,9 +106,11 @@ export class PlayerSystem extends EventEmitter {
         throw new Error('Player not work !');
       }
       this.emit('PLAY');
+      return true;
     } catch (error) {
       console.error(error);
       this.emit('STOP');
+      return false;
     }
   }
 

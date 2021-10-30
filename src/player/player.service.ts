@@ -5,6 +5,8 @@ import { ClientService } from 'src/client/client.service';
 import { Track } from 'src/store/schemas/track.schema';
 import { StoreService } from 'src/store/store.service';
 import { GuildItem } from 'src/store/type';
+import { ConnectionToChannel } from 'src/utils/discordjs';
+import { ErrorType } from 'src/utils/error-type';
 import { PlayerSystem } from './player.system';
 import { TrackService } from './track.service';
 
@@ -54,7 +56,7 @@ export class PlayerService {
   }
 
   async PlayCommand(interaction: CommandInteraction) {
-    interaction.deferReply();
+    interaction.deferReply({ ephemeral: true });
     const url = interaction.options.getString('youtube-url', false);
     const trackId = interaction.options.getString('track-id', false);
     try {
@@ -74,30 +76,22 @@ export class PlayerService {
 
       const guildPlayer = this.guildsPlayer.get(guildId);
       if (!guildPlayer)
-        interaction.reply("Le player n'est pas initialiser sur le serveur !!");
+        return interaction.reply(
+          "Le player n'est pas initialiser sur le serveur !!",
+        );
 
-      const guildMember = await guildPlayer.guild.members.fetch(
-        interaction.user.id,
-      );
-      if (!guildMember)
-        throw new Error('je ne vous trouve pas sur le serveur!');
-      console.log(track);
+      await ConnectionToChannel(guildPlayer, interaction.user.id);
 
-      const selfVoiceChannelId = guildPlayer.currentVoiceChannelId;
-      const userVoiceChannelId = guildMember.voice.channelId;
-
-      if (!userVoiceChannelId) return; // ERREUR À METTRE !!
-      if (!selfVoiceChannelId)
-        await guildPlayer.connectToChannel(userVoiceChannelId);
-      else if (selfVoiceChannelId !== userVoiceChannelId) return; // ERREUR À METTRE ICI !! L'UTILISATEUR N'EST PAS SUR LE MEME CHANNEL QUE DU PLAYER
-
-      guildPlayer.playWithTrack(track);
-      // interaction.
-
-      console.log(url, trackId);
+      if (!(await guildPlayer.playWithTrack(track)))
+        throw ErrorType.ErrorOnStartPlaying;
+      interaction.editReply('OK !');
     } catch (e) {
       console.error(e);
-      interaction.deleteReply();
+      interaction.editReply(`Error: ${e}`);
     }
+  }
+
+  AddCommand(interaction: CommandInteraction) {
+    console.log('toto');
   }
 }
