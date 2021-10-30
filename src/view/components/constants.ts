@@ -1,9 +1,10 @@
+import { ButtonsCustomIds } from 'src/interactions/buttons';
 import { ActionButton } from './types';
 
 export const ButtonsDataState: Array<ActionButton> = [
   {
     // PLAY / PAUSE BTN
-    id: 'play_pause',
+    id: ButtonsCustomIds.PlayPause,
     states: [
       {
         id: 'PLAY',
@@ -22,7 +23,7 @@ export const ButtonsDataState: Array<ActionButton> = [
   },
   {
     // STOP BTN
-    id: 'stop',
+    id: ButtonsCustomIds.Stop,
     states: [
       {
         id: 'DENIE',
@@ -41,7 +42,7 @@ export const ButtonsDataState: Array<ActionButton> = [
   },
   {
     // PREV BTN
-    id: 'prev',
+    id: ButtonsCustomIds.Previous,
     states: [
       {
         id: 'DEFAULT',
@@ -53,7 +54,7 @@ export const ButtonsDataState: Array<ActionButton> = [
   },
   {
     // NEXT BTN
-    id: 'next',
+    id: ButtonsCustomIds.Next,
     states: [
       {
         id: 'DEFAULT',
@@ -66,7 +67,7 @@ export const ButtonsDataState: Array<ActionButton> = [
 
   {
     // REPEAT BTN
-    id: 'repeat',
+    id: ButtonsCustomIds.Repeat,
     states: [
       {
         id: 'NONE',
@@ -85,48 +86,6 @@ export const ButtonsDataState: Array<ActionButton> = [
         id: 'ONE',
         payload: '🔁',
         style: 'SUCCESS',
-        disable: false,
-      },
-    ],
-  },
-  {
-    // MUTE BTN
-    id: 'mute',
-    states: [
-      {
-        id: 'DISABLE',
-        payload: '🔇',
-        style: 'SECONDARY',
-        disable: false,
-      },
-      {
-        id: 'ACTIVE',
-        payload: '🔇',
-        style: 'DANGER',
-        disable: false,
-      },
-    ],
-  },
-  {
-    // VOL_DOWN BTN
-    id: 'vol_down',
-    states: [
-      {
-        id: 'DEFAULT',
-        payload: '🔉',
-        style: 'PRIMARY',
-        disable: false,
-      },
-    ],
-  },
-  {
-    // VOL_UP
-    id: 'vol_up',
-    states: [
-      {
-        id: 'DEFAULT',
-        payload: '🔊',
-        style: 'PRIMARY',
         disable: false,
       },
     ],

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { CommandInteraction, Snowflake } from 'discord.js';
+import { ButtonInteraction, CommandInteraction, Snowflake } from 'discord.js';
 import { ClientService } from 'src/client/client.service';
 import { Track } from 'src/store/schemas/track.schema';
 import { StoreService } from 'src/store/store.service';
@@ -8,6 +8,7 @@ import { GuildItem } from 'src/store/type';
 import { ConnectionToChannel } from 'src/utils/discordjs';
 import { ErrorType } from 'src/utils/error-type';
 import { PlayerSystem } from './player.system';
+import { SimplePlayerStatus } from './simple-player';
 import { TrackService } from './track.service';
 
 @Injectable()
@@ -91,7 +92,61 @@ export class PlayerService {
     }
   }
 
-  AddCommand(interaction: CommandInteraction) {
-    console.log('toto');
+  async AddCommand(interaction: CommandInteraction) {
+    interaction.deferReply({ ephemeral: true });
+    const url = interaction.options.getString('youtube-url', true);
+    try {
+      const guildId = interaction.guildId;
+      const guildPlayer = this.guildsPlayer.get(guildId);
+      if (!guildPlayer)
+        return interaction.reply(
+          "Le player n'est pas initialiser sur le serveur !!",
+        );
+
+      if (!this.trackService.isValidURL(url)) throw new Error('URL invalide');
+
+      const tracks = await this.trackService.getTrackFromUrl(url);
+
+      await guildPlayer.add(tracks);
+
+      interaction.editReply('OK !');
+    } catch (e) {
+      console.error(e);
+      interaction.editReply(`Error: ${e}`);
+    }
+  }
+
+  // BUTTONS
+
+  async PlayPauseButton(interaction: ButtonInteraction) {
+    await interaction.deferUpdate();
+    try {
+      const guildId = interaction.guildId;
+      const guildPlayer = this.guildsPlayer.get(guildId);
+      if (!guildPlayer)
+        return interaction.reply(
+          "Le player n'est pas initialiser sur le serveur !!",
+        );
+
+      const player = guildPlayer.player;
+      const playlist = guildPlayer.playlist;
+
+      switch (player.status) {
+        case SimplePlayerStatus.Play:
+          if (!player.pause()) throw 'Error to start music';
+          break;
+        case SimplePlayerStatus.Pause:
+          if (!player.resume()) throw 'Error to start music';
+          break;
+        case SimplePlayerStatus.Stop:
+          const track = playlist.tracks[playlist.index];
+          await ConnectionToChannel(guildPlayer, interaction.user.id);
+          if (!(await player.play(track))) throw 'Error to start music';
+          break;
+      }
+    } catch (e) {
+      console.error(e);
+      interaction.editReply(`Error: ${e}`);
+    }
   }
 }

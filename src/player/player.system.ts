@@ -16,7 +16,8 @@ import { PlayingState } from 'src/utils';
 import { GuildItem } from 'src/store/type';
 import { Track } from 'src/store/schemas/track.schema';
 import { TrackService } from './track.service';
-import { SimplePlayer } from './simple-player';
+import { SimplePlayer, SimplePlayerStatus } from './simple-player';
+import { Playlist } from 'src/store/schemas/playlist.schema';
 
 export interface PlayerSystemEvents {
   PLAY: [];
@@ -48,6 +49,8 @@ export class PlayerSystem extends EventEmitter {
 
   private _state: PlayingState;
 
+  private _playlist: Playlist;
+
   private _currentTrack: Track;
 
   constructor(
@@ -58,8 +61,10 @@ export class PlayerSystem extends EventEmitter {
     private trackService: TrackService,
   ) {
     super();
+    this._playlist = this.guildStore.playlist;
     this._state = PlayingState.STOP;
     this._simplePlayer = new SimplePlayer(this.guildId, this.trackService);
+    this._addEventsOnSimplePlayer(this._simplePlayer);
   }
 
   get currentVoiceChannelId(): string | undefined {
@@ -69,6 +74,17 @@ export class PlayerSystem extends EventEmitter {
 
   get player(): SimplePlayer {
     return this._simplePlayer;
+  }
+
+  get playlist() {
+    return this.guildStore.playlist;
+  }
+
+  private _addEventsOnSimplePlayer(player: SimplePlayer) {
+    player.on('next', () => {
+      const track = this.playlist.tracks[0];
+      player.play(track);
+    });
   }
 
   async connectToChannel(channelId: Snowflake): Promise<boolean> {
@@ -91,12 +107,6 @@ export class PlayerSystem extends EventEmitter {
   play() {
     if (this._state == PlayingState.PLAY) return;
 
-    if (this._voiceAudioPlayer && this._state == PlayingState.PAUSE) {
-      this._voiceAudioPlayer.unpause();
-      this._state = PlayingState.PLAY;
-      return;
-    }
-
     const playlistIndex = this.guildStore.playlist.index;
   }
 
@@ -112,6 +122,14 @@ export class PlayerSystem extends EventEmitter {
       this.emit('STOP');
       return false;
     }
+  }
+
+  async add(tracks: Track | Track[]) {
+    if (Array.isArray(tracks)) {
+      this._playlist.tracks.push(...tracks);
+    } else this._playlist.tracks.push(tracks);
+    this.guildStore.markModified('playlist.tracks');
+    await this.guildStore.save();
   }
 
   stop() {

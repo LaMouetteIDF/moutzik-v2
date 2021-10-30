@@ -17,6 +17,7 @@ export enum SimplePlayerStatus {
   Play = 'play',
   Pause = 'pause',
   Idle = 'idle',
+  Stop = 'stop',
 }
 
 export interface SimplePlayerEvents {
@@ -24,6 +25,8 @@ export interface SimplePlayerEvents {
   pause: [];
   idle: [];
   error: [];
+  stop: [];
+  next: [];
 }
 
 export declare interface SimplePlayer extends EventEmitter {
@@ -51,14 +54,21 @@ export class SimplePlayer extends EventEmitter {
    */
   private _cTrack?: Track;
 
+  private _status: SimplePlayerStatus;
+
   constructor(public guildId: string, private trackService: TrackService) {
     super();
+    this._status = SimplePlayerStatus.Stop;
   }
 
   get playbackTime() {
     const playbackTime = this._voiceResource?.playbackDuration;
     if (!playbackTime) return 0;
     return Math.ceil(playbackTime / 1000);
+  }
+
+  get status(): SimplePlayerStatus {
+    return this._status;
   }
 
   get currentTrack() {
@@ -70,6 +80,7 @@ export class SimplePlayer extends EventEmitter {
       const connection = getVoiceConnection(this.guildId);
       if (!connection) throw new Error('Voice connection is not found !');
       this._voiceAudioPlayer = createAudioPlayer();
+      this._addEventsOnAudioPlayer(this._voiceAudioPlayer);
       connection.subscribe(this._voiceAudioPlayer);
     }
   }
@@ -92,15 +103,37 @@ export class SimplePlayer extends EventEmitter {
     }
   }
 
+  private _addEventsOnAudioPlayer(audioPlayer: AudioPlayer) {
+    audioPlayer.on(AudioPlayerStatus.Idle, () => {
+      if (this._status == SimplePlayerStatus.Play) {
+        this.emit('next');
+      }
+    });
+    audioPlayer.on(AudioPlayerStatus.Playing, () => {
+      this._status = SimplePlayerStatus.Play;
+      this.emit('play', this._cTrack);
+    });
+    audioPlayer.on(AudioPlayerStatus.Paused, () => {
+      this._status = SimplePlayerStatus.Pause;
+      this.emit('pause');
+    });
+    audioPlayer.on('error', (e) => {
+      console.error(e);
+      if (this._status == SimplePlayerStatus.Play) {
+        this.play(this._cTrack);
+        this.emit('error');
+      }
+    });
+  }
+
   async play(track: Track): Promise<boolean> {
     try {
       this._makePlayer();
       this._voiceAudioPlayer.play(await this.createAudioResource(track));
-      this.emit('play', track);
+      this._cTrack = track;
     } catch (e) {
       return false;
     }
-
     return true;
   }
 
@@ -117,10 +150,12 @@ export class SimplePlayer extends EventEmitter {
   }
 
   stop() {
+    this._status = SimplePlayerStatus.Stop;
     this._voiceAudioPlayer?.stop();
     delete this._voiceAudioPlayer;
     delete this._voiceResource;
     this._voiceStream?.destroy();
     delete this._voiceStream;
+    this.emit('stop');
   }
 }

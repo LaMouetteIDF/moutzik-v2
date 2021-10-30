@@ -13,6 +13,7 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import { ClientService } from 'src/client/client.service';
 import { PlayerService } from 'src/player/player.service';
 import { ConfigService } from 'src/config/config.service';
+import { ButtonsCustomIds } from './buttons';
 
 @Injectable()
 export class InteractionsService implements OnModuleInit {
@@ -87,6 +88,7 @@ export class InteractionsService implements OnModuleInit {
         this.player.PlayCommand(interaction);
         break;
       case 'add':
+        this.player.AddCommand(interaction);
         break;
       case 'remove':
         break;
@@ -96,6 +98,14 @@ export class InteractionsService implements OnModuleInit {
   }
 
   buttonInteraction(interaction: ButtonInteraction) {
-    console.log(interaction);
+    const buttonId = interaction.customId;
+
+    console.log(buttonId);
+
+    switch (buttonId) {
+      case ButtonsCustomIds.PlayPause:
+        this.player.PlayPauseButton(interaction);
+        break;
+    }
   }
 }
