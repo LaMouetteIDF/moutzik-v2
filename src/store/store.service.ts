@@ -10,6 +10,8 @@ import { InjectModel } from '@nestjs/mongoose';
 
 import { Guild, GuildDocument } from './schemas/guild.schema';
 import type { GuildConfigItem, GuildItem } from './type';
+import { plainToClass } from 'class-transformer';
+import { Playlist } from './schemas/playlist.schema';
 
 @Injectable()
 export class StoreService implements OnApplicationBootstrap {
@@ -23,10 +25,17 @@ export class StoreService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     const guildDatas = await this.guildModel.find().exec();
     for (const guildData of guildDatas) {
+      guildData.playlist = plainToClass(Playlist, guildData.playlist);
       this.guilds.set(guildData.guildId, guildData);
     }
 
-    // console.log(guildDatas);
+    setInterval(async () => {
+      for (const item of this.guilds.values()) {
+        item.markModified('playlist.index');
+        item.markModified('playlist.repeat');
+        await item.save();
+      }
+    }, 1_000 * 60 * 5);
 
     // Emit End FAKE
     // A CHANGER !!!!!!!!!!!!!!!

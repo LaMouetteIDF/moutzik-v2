@@ -89,14 +89,19 @@ export class SimplePlayer extends EventEmitter {
     try {
       const stream = await this.trackService.getStream(track);
       if (this._voiceAudioPlayer.state.status == AudioPlayerStatus.Playing) {
+        this._status = SimplePlayerStatus.Idle;
         this._voiceAudioPlayer.stop();
-        await sleep(500);
+        await sleep(100);
       }
       this._voiceStream?.destroy();
       delete this._voiceStream;
       this._voiceStream = stream;
       delete this._voiceResource;
       this._voiceResource = createAudioResource(this._voiceStream);
+      this._voiceResource.playStream.on('error', (error) => {
+        console.error('Error:', error.message);
+        this.play(this._cTrack);
+      });
       return this._voiceResource;
     } catch (error) {
       throw new Error('Stream is not found');
@@ -109,14 +114,17 @@ export class SimplePlayer extends EventEmitter {
         this.emit('next');
       }
     });
+
     audioPlayer.on(AudioPlayerStatus.Playing, () => {
       this._status = SimplePlayerStatus.Play;
       this.emit('play', this._cTrack);
     });
+
     audioPlayer.on(AudioPlayerStatus.Paused, () => {
       this._status = SimplePlayerStatus.Pause;
       this.emit('pause');
     });
+
     audioPlayer.on('error', (e) => {
       console.error(e);
       if (this._status == SimplePlayerStatus.Play) {

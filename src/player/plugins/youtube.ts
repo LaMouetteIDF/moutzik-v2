@@ -24,8 +24,6 @@ export class YoutubePlug {
     const p = this.parseURL(url);
     if (!p) return false;
 
-    console.log('toto');
-
     if (ytpl.validateID(p.id) || validateID(p.id)) return true;
 
     return false;

@@ -12,17 +12,20 @@ import {
 
 import { Readable } from 'stream';
 import { EventEmitter } from 'events';
-import { PlayingState } from 'src/utils';
+import { PlayingState, RepeatState } from 'src/utils';
 import { GuildItem } from 'src/store/type';
 import { Track } from 'src/store/schemas/track.schema';
 import { TrackService } from './track.service';
 import { SimplePlayer, SimplePlayerStatus } from './simple-player';
 import { Playlist } from 'src/store/schemas/playlist.schema';
 
+const NUBER_ITEM_SHOW_IN_AWAIT_QUEUE = 5;
+
 export interface PlayerSystemEvents {
   PLAY: [];
   STOP: [];
   upadatePlaybackTime: [currentPlaybackTime: number];
+  changeRepeatState: [state: RepeatState];
 }
 
 export declare interface PlayerSystem extends EventEmitter {
@@ -50,6 +53,7 @@ export class PlayerSystem extends EventEmitter {
   private _state: PlayingState;
 
   private _playlist: Playlist;
+  private _shortLivePlaylist: Playlist;
 
   private _currentTrack: Track;
 
@@ -72,18 +76,60 @@ export class PlayerSystem extends EventEmitter {
     return connection ? connection.joinConfig.channelId : undefined;
   }
 
+  get currentVoiceConnection(): VoiceConnection | undefined {
+    return getVoiceConnection(this.guildId);
+  }
+
   get player(): SimplePlayer {
     return this._simplePlayer;
   }
 
-  get playlist() {
-    return this.guildStore.playlist;
+  get playlist(): Playlist {
+    return this._shortLivePlaylist ?? this.guildStore.playlist;
+  }
+
+  get currentTrack() {
+    return this.playlist.currentTrack;
+  }
+
+  get nextTracks() {
+    const nextTracks = this.playlist.getNextTacksList(
+      NUBER_ITEM_SHOW_IN_AWAIT_QUEUE,
+    );
+    if (this._shortLivePlaylist) {
+      nextTracks.push(
+        ...this._playlist.getNextTacksList(
+          NUBER_ITEM_SHOW_IN_AWAIT_QUEUE - nextTracks.length,
+          true,
+        ),
+      );
+    }
+    return nextTracks;
   }
 
   private _addEventsOnSimplePlayer(player: SimplePlayer) {
     player.on('next', () => {
-      const track = this.playlist.tracks[0];
-      player.play(track);
+      switch (this.playlist.repeat) {
+        case RepeatState.NONE:
+          if (this._shortLivePlaylist) {
+            const track = this.playlist.next();
+            if (!track) {
+              delete this._shortLivePlaylist;
+              return player.play(this.playlist.currentTrack);
+            }
+            return player.play(track);
+          }
+          const track = this._playlist.next();
+          if (!track) return this.stop();
+          player.play(track);
+          break;
+        case RepeatState.ALL:
+          player.play(this._playlist.next(true));
+          break;
+        case RepeatState.ONE:
+          player.play(this._playlist.currentTrack);
+          break;
+      }
     });
   }
 
@@ -104,15 +150,50 @@ export class PlayerSystem extends EventEmitter {
     }
   }
 
-  play() {
-    if (this._state == PlayingState.PLAY) return;
+  async play() {
+    if (this._simplePlayer.status == SimplePlayerStatus.Play) return true;
 
-    const playlistIndex = this.guildStore.playlist.index;
+    return await this.player.play(this.playlist.currentTrack);
   }
 
-  async playWithTrack(track: Track) {
+  pause() {
+    return this._simplePlayer.pause();
+  }
+
+  resume() {
+    return this._simplePlayer.resume();
+  }
+
+  async next() {
+    if (this._shortLivePlaylist) {
+      const track = this._shortLivePlaylist.next();
+      if (!track) {
+        delete this._shortLivePlaylist;
+        return this._simplePlayer.play(this.playlist.currentTrack);
+      }
+      return this._simplePlayer.play(track);
+    }
+    const track = this.playlist.next(true);
+    if (!this.currentVoiceChannelId) return true;
+    return await this._simplePlayer.play(track);
+  }
+
+  async previous() {
+    if (!this.currentVoiceChannelId) {
+      this.playlist.previous();
+      return true;
+    }
+    if (this._simplePlayer.playbackTime > 5)
+      return await this._simplePlayer.play(this.playlist.currentTrack);
+    return await this._simplePlayer.play(this.playlist.previous());
+  }
+
+  async playWithTrack(tracks: Track | Track[]) {
     try {
-      if (!this._simplePlayer.play(track)) {
+      delete this._shortLivePlaylist;
+      this._shortLivePlaylist = new Playlist();
+      this._shortLivePlaylist.add(tracks);
+      if (!(await this._simplePlayer.play(this.playlist.currentTrack))) {
         throw new Error('Player not work !');
       }
       this.emit('PLAY');
@@ -125,15 +206,31 @@ export class PlayerSystem extends EventEmitter {
   }
 
   async add(tracks: Track | Track[]) {
-    if (Array.isArray(tracks)) {
-      this._playlist.tracks.push(...tracks);
-    } else this._playlist.tracks.push(tracks);
+    this._playlist.add(tracks);
     this.guildStore.markModified('playlist.tracks');
     await this.guildStore.save();
   }
 
+  changeRepeatState() {
+    switch (this.playlist.repeat) {
+      case RepeatState.NONE:
+        this.playlist.setRepeatState(RepeatState.ALL);
+        break;
+      case RepeatState.ALL:
+        this.playlist.setRepeatState(RepeatState.ONE);
+        break;
+      case RepeatState.ONE:
+        this.playlist.setRepeatState(RepeatState.NONE);
+        break;
+    }
+
+    this.emit('changeRepeatState', this.playlist.repeat);
+  }
+
   stop() {
+    delete this._shortLivePlaylist;
     this._simplePlayer.stop();
+    this.currentVoiceConnection?.destroy();
     this.emit('STOP');
   }
 }

@@ -14,15 +14,11 @@ export class Guild {
   @Prop()
   config: Config;
 
-  @Prop()
-  playerOptions: PlayerOptions;
-
-  @Prop()
+  @Prop({ type: Playlist })
   playlist: Playlist;
 
   constructor() {
     this.config = new Config();
-    this.playerOptions = new PlayerOptions();
     this.playlist = new Playlist();
   }
 }

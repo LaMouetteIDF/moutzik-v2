@@ -1,6 +1,12 @@
+import { Embed } from '@discordjs/builders';
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { ButtonInteraction, CommandInteraction, Snowflake } from 'discord.js';
+import {
+  ButtonInteraction,
+  CommandInteraction,
+  MessageEmbed,
+  Snowflake,
+} from 'discord.js';
 import { ClientService } from 'src/client/client.service';
 import { Track } from 'src/store/schemas/track.schema';
 import { StoreService } from 'src/store/store.service';
@@ -71,15 +77,10 @@ export class PlayerService {
       if (!urlIsValide) return; // ERREUR À METTRE ICI !!
 
       const track = await this.trackService.getTrackFromUrl(url);
-      if (Array.isArray(track)) return;
+      // if (Array.isArray(track)) return;
 
-      const guildId = interaction.guildId;
-
-      const guildPlayer = this.guildsPlayer.get(guildId);
-      if (!guildPlayer)
-        return interaction.reply(
-          "Le player n'est pas initialiser sur le serveur !!",
-        );
+      const guildPlayer = this.guildsPlayer.get(interaction.guildId);
+      if (!guildPlayer) throw 'server not initialized';
 
       await ConnectionToChannel(guildPlayer, interaction.user.id);
 
@@ -119,14 +120,15 @@ export class PlayerService {
   // BUTTONS
 
   async PlayPauseButton(interaction: ButtonInteraction) {
-    await interaction.deferUpdate();
+    try {
+      await interaction.deferUpdate();
+    } catch (error) {
+      return;
+    }
     try {
       const guildId = interaction.guildId;
       const guildPlayer = this.guildsPlayer.get(guildId);
-      if (!guildPlayer)
-        return interaction.reply(
-          "Le player n'est pas initialiser sur le serveur !!",
-        );
+      if (!guildPlayer) throw 'server not initialized';
 
       const player = guildPlayer.player;
       const playlist = guildPlayer.playlist;
@@ -144,6 +146,78 @@ export class PlayerService {
           if (!(await player.play(track))) throw 'Error to start music';
           break;
       }
+    } catch (e) {
+      console.error(e);
+      interaction.editReply(`Error: ${e}`);
+    }
+  }
+
+  async StopButton(interaction: ButtonInteraction) {
+    try {
+      await interaction.deferUpdate();
+    } catch (error) {
+      return;
+    }
+    try {
+      const guildPlayer = this.guildsPlayer.get(interaction.guildId);
+      if (!guildPlayer) throw 'server not initialized';
+
+      guildPlayer.stop();
+    } catch (e) {
+      console.error(e);
+      await interaction.editReply(`Error: ${e}`);
+    }
+  }
+
+  async PreviousButton(interaction: ButtonInteraction) {
+    try {
+      await interaction.deferUpdate();
+    } catch (error) {
+      return;
+    }
+    try {
+      const guildPlayer = this.guildsPlayer.get(interaction.guildId);
+      if (!guildPlayer) throw 'server not initialized';
+
+      await ConnectionToChannel(guildPlayer, interaction.user.id, false);
+
+      if (!(await guildPlayer.previous())) throw new Error('Error to play');
+    } catch (e) {
+      console.error(e);
+      interaction.editReply(`Error: ${e}`);
+    }
+  }
+
+  async NextButton(interaction: ButtonInteraction) {
+    try {
+      await interaction.deferUpdate();
+    } catch (error) {
+      return;
+    }
+    try {
+      const guildPlayer = this.guildsPlayer.get(interaction.guildId);
+      if (!guildPlayer) throw 'server not initialized';
+
+      await ConnectionToChannel(guildPlayer, interaction.user.id, false);
+
+      if (!(await guildPlayer.next())) throw new Error('Error to play');
+    } catch (e) {
+      console.error(e);
+      interaction.editReply(`Error: ${e}`);
+    }
+  }
+
+  async RepeatButton(interaction: ButtonInteraction) {
+    try {
+      await interaction.deferUpdate();
+    } catch (error) {
+      return;
+    }
+    try {
+      const guildPlayer = this.guildsPlayer.get(interaction.guildId);
+      if (!guildPlayer) if (!guildPlayer) throw 'server not initialized';
+
+      guildPlayer.changeRepeatState();
     } catch (e) {
       console.error(e);
       interaction.editReply(`Error: ${e}`);

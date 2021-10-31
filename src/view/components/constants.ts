@@ -84,7 +84,7 @@ export const ButtonsDataState: Array<ActionButton> = [
       },
       {
         id: 'ONE',
-        payload: '🔁',
+        payload: '🔂',
         style: 'SUCCESS',
         disable: false,
       },

@@ -22,20 +22,9 @@ export class PlayerEmbedComponents {
   private duration: number;
 
   constructor() {
-    this.playerResponse = new MessageEmbed()
-      .setColor('DARK_GOLD')
-      .setAuthor('Player Next Generation', 'https://i.imgur.com/AfFp7pu.png')
-      .setTitle('Aucun Titre')
-      .setDescription(this.getPlaybackDurationToCharString(0, this.duration))
-      .setFields([
-        {
-          name: "File d'attente",
-          value: this.getCharStringWaitingNextTrack([]),
-          inline: false,
-        },
-      ]);
-
+    this.playerResponse = new MessageEmbed();
     this.duration = 0;
+    this.setDefault();
   }
 
   get response() {
@@ -83,17 +72,34 @@ export class PlayerEmbedComponents {
   }
 
   private getCharStringWaitingNextTrack(els: Array<string>) {
-    return `\`\`\`\n${(() => {
+    return `\`\`\`${(() => {
       let elements = ``;
       for (const item of els) {
-        elements += `- ${
+        elements += `\n- ${
           item.length > MAX_ROW_CHAR
             ? item.substring(0, MAX_ROW_CHAR) + '...'
             : item
-        }\n`;
+        }${els.length == 0 ? '\n' : ''}`;
       }
       return elements;
     })()} \`\`\``;
+  }
+
+  setDefault() {
+    this.playerResponse
+      .setAuthor(
+        'Moutzik',
+        'https://cdn.discordapp.com/avatars/846655924432142367/e0b45c795cf6695320a8b9b1907a768a.webp?size=128',
+      )
+      .setTitle('Aucun Titre')
+      .setDescription(this.getPlaybackDurationToCharString(0, this.duration))
+      .setFields([
+        {
+          name: "File d'attente",
+          value: this.getCharStringWaitingNextTrack([]),
+          inline: false,
+        },
+      ]);
   }
 
   setTitle(title: string, url?: string) {

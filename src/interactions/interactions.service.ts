@@ -52,8 +52,6 @@ export class InteractionsService implements OnModuleInit {
 
   @OnEvent('player.ready')
   eventIteraction() {
-    console.log('titi');
-
     if (this.interactionReady) return;
     this.client.on('interactionCreate', async (interaction) => {
       if (interaction.isCommand()) this.commandInteraction(interaction);
@@ -98,13 +96,21 @@ export class InteractionsService implements OnModuleInit {
   }
 
   buttonInteraction(interaction: ButtonInteraction) {
-    const buttonId = interaction.customId;
-
-    console.log(buttonId);
-
-    switch (buttonId) {
+    switch (interaction.customId) {
       case ButtonsCustomIds.PlayPause:
         this.player.PlayPauseButton(interaction);
+        break;
+      case ButtonsCustomIds.Stop:
+        this.player.StopButton(interaction);
+        break;
+      case ButtonsCustomIds.Previous:
+        this.player.PreviousButton(interaction);
+        break;
+      case ButtonsCustomIds.Next:
+        this.player.NextButton(interaction);
+        break;
+      case ButtonsCustomIds.Repeat:
+        this.player.RepeatButton(interaction);
         break;
     }
   }
