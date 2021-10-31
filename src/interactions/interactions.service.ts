@@ -36,6 +36,17 @@ export class InteractionsService implements OnModuleInit {
 
       const rest = new REST({ version: '9' }).setToken(token);
       const commandsJSON = this.commands.map((command) => command.toJSON());
+
+      client.on('guildCreate', async (guild) => {
+        try {
+          await rest.put(Routes.applicationGuildCommands(clientID, guild.id), {
+            body: commandsJSON,
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      });
+
       try {
         if (this.configServiceNest.get<string>('NODE_ENV') == 'prod') {
           for (const guild of client.guilds.cache.values()) {
@@ -56,9 +67,8 @@ export class InteractionsService implements OnModuleInit {
         }
 
         console.log('Successfully reloaded application (/) commands.');
-      } catch (error) {
-        console.error(error);
-        throw error;
+      } catch (e) {
+        console.error(e);
       }
     });
   }

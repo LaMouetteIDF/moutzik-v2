@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { Config } from './config.schema';
-import { PlayerOptions } from './player_options.schema';
 import { Playlist } from './playlist.schema';
 
 export type GuildDocument = Guild & Document;

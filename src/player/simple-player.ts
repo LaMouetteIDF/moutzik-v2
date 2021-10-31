@@ -24,7 +24,7 @@ export interface SimplePlayerEvents {
   play: [track: Track];
   pause: [];
   idle: [];
-  error: [];
+  error: [error: Error];
   stop: [];
   next: [];
 }
@@ -127,10 +127,7 @@ export class SimplePlayer extends EventEmitter {
 
     audioPlayer.on('error', (e) => {
       console.error(e);
-      if (this._status == SimplePlayerStatus.Play) {
-        this.play(this._cTrack);
-        this.emit('error');
-      }
+      this.play(this._cTrack);
     });
   }
 
