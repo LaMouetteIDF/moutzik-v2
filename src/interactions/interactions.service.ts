@@ -38,9 +38,14 @@ export class InteractionsService implements OnModuleInit {
       const commandsJSON = this.commands.map((command) => command.toJSON());
       try {
         if (this.configServiceNest.get<string>('NODE_ENV') == 'prod') {
-          await rest.put(Routes.applicationCommands(clientID), {
-            body: commandsJSON,
-          });
+          for (const guild of client.guilds.cache.values()) {
+            await rest.put(
+              Routes.applicationGuildCommands(clientID, guild.id),
+              {
+                body: commandsJSON,
+              },
+            );
+          }
         } else {
           await rest.put(
             Routes.applicationGuildCommands(clientID, '360675076783341570'),
