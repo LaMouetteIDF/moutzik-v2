@@ -31,16 +31,24 @@ export class InteractionsService implements OnModuleInit {
   onModuleInit() {
     this.client.on('ready', async (client) => {
       const clientID = client.user.id;
-      const guildID = '360675076783341570';
 
       const token = this.configServiceNest.get<string>('TOKEN');
 
       const rest = new REST({ version: '9' }).setToken(token);
       const commandsJSON = this.commands.map((command) => command.toJSON());
       try {
-        await rest.put(Routes.applicationGuildCommands(clientID, guildID), {
-          body: commandsJSON,
-        });
+        if (this.configServiceNest.get<string>('NODE_ENV') == 'prod') {
+          await rest.put(Routes.applicationCommands(clientID), {
+            body: commandsJSON,
+          });
+        } else {
+          await rest.put(
+            Routes.applicationGuildCommands(clientID, '360675076783341570'),
+            {
+              body: commandsJSON,
+            },
+          );
+        }
 
         console.log('Successfully reloaded application (/) commands.');
       } catch (error) {
