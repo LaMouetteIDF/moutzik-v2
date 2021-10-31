@@ -10,6 +10,7 @@ import PlayCommand from './commands/play';
 import AddCommand from './commands/add';
 import RemoveCommand from './commands/remove';
 import StopCommand from './commands/stop';
+import ListCommand from './commands/list';
 import { ConfigModule } from 'src/config/config.module';
 
 @Module({
@@ -24,6 +25,7 @@ import { ConfigModule } from 'src/config/config.module';
         AddCommand,
         RemoveCommand,
         StopCommand,
+        ListCommand,
       ],
     },
   ],

@@ -63,7 +63,7 @@ export class PlayerService {
   }
 
   async PlayCommand(interaction: CommandInteraction) {
-    interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ ephemeral: true });
     const url = interaction.options.getString('youtube-url', false);
     const trackId = interaction.options.getString('track-id', false);
     try {
@@ -94,7 +94,7 @@ export class PlayerService {
   }
 
   async AddCommand(interaction: CommandInteraction) {
-    interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ ephemeral: true });
     const url = interaction.options.getString('youtube-url', true);
     try {
       const guildId = interaction.guildId;

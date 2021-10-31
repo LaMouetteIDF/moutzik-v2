@@ -84,6 +84,11 @@ export class ViewSystem {
 
   private _addEventsOnGuildPlayer(guildPlayer: PlayerSystem) {
     guildPlayer.on('changeRepeatState', async (state) => {
+      this._setButtonState();
+      await this.update();
+    });
+
+    guildPlayer.on('playlistChange', async () => {
       await this.update();
     });
   }

@@ -1,8 +1,11 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
+import { CommandsName } from '../commands';
 
 const COMMAND = new SlashCommandBuilder();
 
-COMMAND.setName('play').setDescription('Lire une piste ou un lien YT');
+COMMAND.setName(CommandsName.Play).setDescription(
+  'Lire une piste ou un lien YT',
+);
 
 COMMAND.addStringOption((input) =>
   input.setName('youtube-url').setDescription('Lien de vidéo youtube'),

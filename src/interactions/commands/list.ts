@@ -3,6 +3,8 @@ import { CommandsName } from '../commands';
 
 const COMMAND = new SlashCommandBuilder();
 
-COMMAND.setName(CommandsName.Stop).setDescription('Arrêt de la lecture');
+COMMAND.setName(CommandsName.list).setDescription(
+  'Afficher la list de lecture',
+);
 
 export default COMMAND;

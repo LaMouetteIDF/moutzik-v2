@@ -88,6 +88,7 @@ export class YoutubePlug {
       // return single Track
       else return await this.getSingleTrack(ytURL.id, ytURL.t);
     } catch (error) {
+      console.log('tototoottototo');
       console.error(error);
 
       throw new Error(

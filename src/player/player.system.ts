@@ -26,6 +26,7 @@ export interface PlayerSystemEvents {
   STOP: [];
   upadatePlaybackTime: [currentPlaybackTime: number];
   changeRepeatState: [state: RepeatState];
+  playlistChange: [playlist: Playlist];
 }
 
 export declare interface PlayerSystem extends EventEmitter {
@@ -207,6 +208,7 @@ export class PlayerSystem extends EventEmitter {
 
   async add(tracks: Track | Track[]) {
     this._playlist.add(tracks);
+    this.emit('playlistChange', this._playlist);
     this.guildStore.markModified('playlist.tracks');
     await this.guildStore.save();
   }

@@ -1,8 +1,11 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
+import { CommandsName } from '../commands';
 
 const COMMAND = new SlashCommandBuilder();
 
-COMMAND.setName('add').setDescription('Ajout de la piste(s) dans la playlist');
+COMMAND.setName(CommandsName.Add).setDescription(
+  'Ajout de la piste(s) dans la playlist',
+);
 
 COMMAND.addStringOption((input) =>
   input

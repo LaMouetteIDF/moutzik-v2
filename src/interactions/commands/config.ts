@@ -1,9 +1,11 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { ConfigSubCommandsNameOption } from '../commands';
+import { CommandsName, ConfigSubCommandsNameOption } from '../commands';
 
 const COMMAND = new SlashCommandBuilder();
 
-COMMAND.setName('config').setDescription('Configuration général du lecteur');
+COMMAND.setName(CommandsName.Config).setDescription(
+  'Configuration général du lecteur',
+);
 
 COMMAND.addSubcommandGroup((subcommandGroup) =>
   subcommandGroup

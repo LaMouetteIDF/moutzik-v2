@@ -1,8 +1,9 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
+import { CommandsName } from '../commands';
 
 const COMMAND = new SlashCommandBuilder();
 
-COMMAND.setName('remove').setDescription(
+COMMAND.setName(CommandsName.remove).setDescription(
   'Suppression de la piste dans la playlist',
 );
 
