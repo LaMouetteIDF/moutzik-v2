@@ -114,13 +114,17 @@ export class ViewSystem {
   }
 
   private async newInstancePlayer() {
-    this.instancePlayer = await this.playerChannel.send({
-      embeds: this.embeds,
-      components: this.guildView.action.response,
-    });
-    this.guildStore.config.playerInstanceId = this.instancePlayer.id;
-    this.guildStore.markModified('config');
-    this.guildStore.save();
+    try {
+      this.instancePlayer = await this.playerChannel.send({
+        embeds: this.embeds,
+        components: this.guildView.action.response,
+      });
+      this.guildStore.config.playerInstanceId = this.instancePlayer.id;
+      this.guildStore.markModified('config');
+      this.guildStore.save();
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async update() {
