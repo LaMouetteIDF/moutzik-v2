@@ -3,4 +3,9 @@ export enum ErrorType {
   UserNotInVoiceChannel,
   UserNotInGuild,
   ErrorOnStartPlaying,
+  ErrorOnDeferReplyOrUpdateMessage,
+  CommandIsNotInGuildTextChannel,
+  BotNotHavePermissionForWriteInChannel,
+  BotNotHaveAccesToChannel,
+  IsNotTextChannel,
 }

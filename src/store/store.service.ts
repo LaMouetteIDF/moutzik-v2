@@ -12,6 +12,7 @@ import { Guild, GuildDocument } from './schemas/guild.schema';
 import type { GuildConfigItem, GuildItem } from './type';
 import { plainToClass } from 'class-transformer';
 import { Playlist } from './schemas/playlist.schema';
+import { Snowflake } from 'discord.js';
 
 @Injectable()
 export class StoreService implements OnApplicationBootstrap {
@@ -63,8 +64,12 @@ export class StoreService implements OnApplicationBootstrap {
     return this.guilds.get(guildId);
   }
 
-  get(key: string) {
+  get(key: string): GuildItem | null {
     return this.guilds.get(key);
+  }
+
+  has(guildId: Snowflake): boolean {
+    return this.guilds.has(guildId);
   }
 
   async setConfigOption<K extends keyof GuildConfigItem>(

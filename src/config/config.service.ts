@@ -1,21 +1,50 @@
 import { Injectable } from '@nestjs/common';
-import { CommandInteraction, TextChannel, VoiceChannel } from 'discord.js';
+import {
+  Channel,
+  CommandInteraction,
+  Permissions,
+  TextChannel,
+  VoiceChannel,
+} from 'discord.js';
 import { ConfigSubCommandsNameOption } from 'src/interactions/commands';
 import { PlayerService } from 'src/player/player.service';
 import { StoreService } from 'src/store/store.service';
 import { GuildConfigItem } from 'src/store/type';
+import {
+  CheckIfChannelIsAccess,
+  CheckPermissionWriteOnTextChannel,
+} from 'src/utils/discord/check-permissions';
+import { ErrorType } from 'src/utils/error-type';
 
 @Injectable()
 export class ConfigService {
   constructor(private store: StoreService, private player: PlayerService) {}
 
   async newGuild(interaction: CommandInteraction) {
+    await CheckIfChannelIsAccess(interaction.channel);
+    if (!interaction.inGuild()) return;
+
+    if (interaction.channel instanceof TextChannel) {
+      CheckPermissionWriteOnTextChannel(
+        interaction.client.user.id,
+        interaction.channel,
+      );
+    } else throw ErrorType.IsNotTextChannel;
+
+    console.log(this.store.has(interaction.guildId));
+
+    if (this.store.has(interaction.guildId)) {
+      await interaction.editReply('Le serveur est déjà initialisé !');
+      return;
+    }
+
     const guildData = await this.store.newItem(
       interaction.guildId,
       interaction.channelId,
     );
     this.player.newGuildPlayer(guildData);
-    interaction.reply('Ok!');
+
+    await interaction.editReply('Le serveur est maintenant initialisé !');
   }
 
   async setConfig(interaction: CommandInteraction) {
@@ -73,6 +102,6 @@ export class ConfigService {
 
     await guildItem.save();
 
-    interaction.reply('OK !');
+    await interaction.reply('OK !');
   }
 }

@@ -84,37 +84,56 @@ export class InteractionsService implements OnModuleInit {
     // this.eventEmitter.emit('player.ready');
   }
 
-  commandInteraction(interaction: CommandInteraction) {
-    const { commandName } = interaction;
+  async commandInteraction(interaction: CommandInteraction) {
+    if (!interaction.guild) {
+      await interaction.reply(
+        "La commande n'est pas executer dans un serveur discord !",
+      );
+      return;
+    }
 
-    switch (commandName) {
-      case 'config':
-        const commandGroupName = interaction.options.getSubcommandGroup();
-        const subcommand = interaction.options.getSubcommand();
-        switch (commandGroupName) {
-          case 'player':
-            switch (subcommand) {
-              case 'init':
-                this.config.newGuild(interaction);
-                console.log('called init player');
-            }
-            break;
-          case 'option':
-            this.config.setConfig(interaction);
-            break;
-        }
-        break;
+    try {
+      await interaction.deferReply({ ephemeral: true });
+    } catch (error) {
+      console.error('Error on Defer reply');
+      return;
+    }
 
-      case 'play':
-        this.player.PlayCommand(interaction);
-        break;
-      case 'add':
-        this.player.AddCommand(interaction);
-        break;
-      case 'remove':
-        break;
-      case 'stop':
-        break;
+    try {
+      const { commandName } = interaction;
+
+      switch (commandName) {
+        case 'config':
+          const commandGroupName = interaction.options.getSubcommandGroup();
+          const subcommand = interaction.options.getSubcommand();
+          switch (commandGroupName) {
+            case 'player':
+              switch (subcommand) {
+                case 'init':
+                  await this.config.newGuild(interaction);
+                  console.log('called init player');
+              }
+              break;
+            case 'option':
+              await this.config.setConfig(interaction);
+              break;
+          }
+          break;
+
+        case 'play':
+          await this.player.PlayCommand(interaction);
+          break;
+        case 'add':
+          await this.player.AddCommand(interaction);
+          break;
+        case 'remove':
+          break;
+        case 'stop':
+          break;
+      }
+    } catch (error) {
+      console.error(error);
+      await interaction.editReply({ content: `${error}` });
     }
   }
 
