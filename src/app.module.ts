@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule as ConfigModuleNest } from '@nestjs/config';
+import {
+  ConfigModule as ConfigModuleNest,
+  ConfigService,
+} from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MongooseModule } from '@nestjs/mongoose';
 
@@ -9,7 +12,6 @@ import { ClientModule } from './client/client.module';
 import { InteractionsModule } from './interactions/interactions.module';
 import { PlayerModule } from './player/player.module';
 import { StoreModule } from './store/store.module';
-import { ViewModule } from './view/view.module';
 import { ConfigModule } from './config/config.module';
 
 @Module({
@@ -31,32 +33,36 @@ import { ConfigModule } from './config/config.module';
       // disable throwing uncaughtException if an error event is emitted and it has no listeners
       ignoreErrors: false,
     }),
-    MongooseModule.forRoot('mongodb://localhost/music_bot', {
-      useNewUrlParser: true,
-      useCreateIndex: true,
-      connectionFactory: async (connection) => {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        // connection.plugin(require('mongoose-autopopulate'));
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGODB_URI'),
+        useNewUrlParser: true,
+        useCreateIndex: true,
+        connectionFactory: async (connection) => {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          // connection.plugin(require('mongoose-autopopulate'));
 
-        connection.on('connected', () => {
-          console.log('Connected to database');
-        });
-        connection.on('disconnected', () => {
-          console.log('Disconnected to database');
-        });
+          connection.on('connected', () => {
+            console.log('Connected to database');
+          });
+          connection.on('disconnected', () => {
+            console.log('Disconnected to database');
+          });
 
-        connection.on('error', (error) => {
-          console.debug('OnError error', error);
-        });
+          connection.on('error', (error) => {
+            console.debug('OnError error', error);
+          });
 
-        return connection;
-      },
+          return connection;
+        },
+      }),
+      inject: [ConfigService],
     }),
     StoreModule,
     InteractionsModule,
     ClientModule,
     PlayerModule,
-    ViewModule,
     ConfigModule,
   ],
   providers: [AppService],

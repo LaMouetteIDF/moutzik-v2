@@ -18,6 +18,8 @@ import { Track } from 'src/store/schemas/track.schema';
 import { TrackService } from './track.service';
 import { SimplePlayer, SimplePlayerStatus } from './simple-player';
 import { Playlist } from 'src/store/schemas/playlist.schema';
+import { ViewSystem } from './view.system';
+import { Playlists } from 'src/store/schemas/playlists.schema';
 
 const NUBER_ITEM_SHOW_IN_AWAIT_QUEUE = 5;
 
@@ -53,10 +55,12 @@ export class PlayerSystem extends EventEmitter {
 
   private _state: PlayingState;
 
-  private _playlist: Playlist;
+  private _playlists: Playlists;
   private _shortLivePlaylist: Playlist;
 
   private _currentTrack: Track;
+
+  private _view: ViewSystem;
 
   constructor(
     public guildId: Snowflake,
@@ -66,10 +70,16 @@ export class PlayerSystem extends EventEmitter {
     private trackService: TrackService,
   ) {
     super();
-    this._playlist = this.guildStore.playlist;
+    this._playlists = this.guildStore.playlists;
     this._state = PlayingState.STOP;
     this._simplePlayer = new SimplePlayer(this.guildId, this.trackService);
     this._addEventsOnSimplePlayer(this._simplePlayer);
+    this._view = new ViewSystem(
+      this.guildId,
+      this.guild,
+      this.guildStore,
+      this,
+    );
   }
 
   get currentVoiceChannelId(): string | undefined {
@@ -86,11 +96,19 @@ export class PlayerSystem extends EventEmitter {
   }
 
   get playlist(): Playlist {
-    return this._shortLivePlaylist ?? this.guildStore.playlist;
+    return this._shortLivePlaylist ?? this.guildStore.playlists.currentPlaylist;
+  }
+
+  get playlists(): Playlists {
+    return this._playlists;
   }
 
   get currentTrack() {
     return this.playlist.currentTrack;
+  }
+
+  get storeItem() {
+    return this.guildStore;
   }
 
   get nextTracks() {
@@ -99,7 +117,7 @@ export class PlayerSystem extends EventEmitter {
     );
     if (this._shortLivePlaylist) {
       nextTracks.push(
-        ...this._playlist.getNextTacksList(
+        ...this._playlists.currentPlaylist.getNextTacksList(
           NUBER_ITEM_SHOW_IN_AWAIT_QUEUE - nextTracks.length,
           true,
         ),
@@ -120,15 +138,15 @@ export class PlayerSystem extends EventEmitter {
             }
             return player.play(track);
           }
-          const track = this._playlist.next();
+          const track = this._playlists.currentPlaylist.next();
           if (!track) return this.stop();
           player.play(track);
           break;
         case RepeatState.ALL:
-          player.play(this._playlist.next(true));
+          player.play(this._playlists.currentPlaylist.next(true));
           break;
         case RepeatState.ONE:
-          player.play(this._playlist.currentTrack);
+          player.play(this._playlists.currentPlaylist.currentTrack);
           break;
       }
     });
@@ -192,7 +210,7 @@ export class PlayerSystem extends EventEmitter {
   async playWithTrack(tracks: Track | Track[]) {
     try {
       delete this._shortLivePlaylist;
-      this._shortLivePlaylist = new Playlist();
+      this._shortLivePlaylist = new Playlist('_short-lived');
       this._shortLivePlaylist.add(tracks);
       if (!(await this._simplePlayer.play(this.playlist.currentTrack))) {
         throw new Error('Player not work !');
@@ -207,10 +225,8 @@ export class PlayerSystem extends EventEmitter {
   }
 
   async add(tracks: Track | Track[]) {
-    this._playlist.add(tracks);
-    this.emit('playlistChange', this._playlist);
-    this.guildStore.markModified('playlist.tracks');
-    await this.guildStore.save();
+    this._playlists.currentPlaylist.add(tracks);
+    this.emit('playlistChange', this._playlists.currentPlaylist);
   }
 
   changeRepeatState() {
@@ -234,5 +250,17 @@ export class PlayerSystem extends EventEmitter {
     this._simplePlayer.stop();
     this.currentVoiceConnection?.destroy();
     this.emit('STOP');
+  }
+
+  async updateView() {
+    await this._view.update();
+  }
+
+  async save() {
+    try {
+      await this.guildStore.save();
+    } catch (error) {
+      console.log(error);
+    }
   }
 }

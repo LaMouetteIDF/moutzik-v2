@@ -14,10 +14,11 @@ import { ClientService } from 'src/client/client.service';
 import { PlayerService } from 'src/player/player.service';
 import { ConfigService } from 'src/config/config.service';
 import { ButtonsCustomIds } from './buttons';
+import { CommandsName, ConfigSubGroupeCommandsName } from './commands';
 
 @Injectable()
 export class InteractionsService implements OnModuleInit {
-  private interactionReady = false;
+  private _interactionsIsInit = false;
 
   constructor(
     private client: ClientService,
@@ -37,15 +38,15 @@ export class InteractionsService implements OnModuleInit {
       const rest = new REST({ version: '9' }).setToken(token);
       const commandsJSON = this.commands.map((command) => command.toJSON());
 
-      client.on('guildCreate', async (guild) => {
-        try {
-          await rest.put(Routes.applicationGuildCommands(clientID, guild.id), {
-            body: commandsJSON,
-          });
-        } catch (e) {
-          console.error(e);
-        }
-      });
+      // client.on('guildCreate', async (guild) => {
+      //   try {
+      //     await rest.put(Routes.applicationGuildCommands(clientID, guild.id), {
+      //       body: commandsJSON,
+      //     });
+      //   } catch (e) {
+      //     console.error(e);
+      //   }
+      // });
 
       try {
         if (this.configServiceNest.get<string>('NODE_ENV') == 'prod') {
@@ -73,15 +74,13 @@ export class InteractionsService implements OnModuleInit {
     });
   }
 
-  @OnEvent('player.ready')
-  eventIteraction() {
-    if (this.interactionReady) return;
+  async init() {
+    if (this._interactionsIsInit) return;
     this.client.on('interactionCreate', async (interaction) => {
-      if (interaction.isCommand()) this.commandInteraction(interaction);
-      if (interaction.isButton()) this.buttonInteraction(interaction);
+      if (interaction.isCommand()) await this.commandInteraction(interaction);
+      if (interaction.isButton()) await this.buttonInteraction(interaction);
     });
-    this.interactionReady = true;
-    // this.eventEmitter.emit('player.ready');
+    this._interactionsIsInit = true;
   }
 
   async commandInteraction(interaction: CommandInteraction) {
@@ -103,7 +102,7 @@ export class InteractionsService implements OnModuleInit {
       const { commandName } = interaction;
 
       switch (commandName) {
-        case 'config':
+        case CommandsName.CONFIG:
           const commandGroupName = interaction.options.getSubcommandGroup();
           const subcommand = interaction.options.getSubcommand();
           switch (commandGroupName) {
@@ -114,45 +113,43 @@ export class InteractionsService implements OnModuleInit {
                   console.log('called init player');
               }
               break;
-            case 'option':
+            case ConfigSubGroupeCommandsName.INIT:
+              await this.config.newGuild(interaction);
+              break;
+            case ConfigSubGroupeCommandsName.OPTION:
               await this.config.setConfig(interaction);
               break;
           }
           break;
 
-        case 'play':
+        case CommandsName.PLAY:
           await this.player.PlayCommand(interaction);
           break;
-        case 'add':
-          await this.player.AddCommand(interaction);
-          break;
-        case 'remove':
-          break;
-        case 'stop':
+        case CommandsName.TRACKLIST:
+          await this.player.TrackListCommand(interaction);
           break;
       }
     } catch (error) {
-      console.error(error);
       await interaction.editReply({ content: `${error}` });
     }
   }
 
-  buttonInteraction(interaction: ButtonInteraction) {
+  async buttonInteraction(interaction: ButtonInteraction) {
     switch (interaction.customId) {
       case ButtonsCustomIds.PlayPause:
-        this.player.PlayPauseButton(interaction);
+        await this.player.PlayPauseButton(interaction);
         break;
       case ButtonsCustomIds.Stop:
-        this.player.StopButton(interaction);
+        await this.player.StopButton(interaction);
         break;
       case ButtonsCustomIds.Previous:
-        this.player.PreviousButton(interaction);
+        await this.player.PreviousButton(interaction);
         break;
       case ButtonsCustomIds.Next:
-        this.player.NextButton(interaction);
+        await this.player.NextButton(interaction);
         break;
       case ButtonsCustomIds.Repeat:
-        this.player.RepeatButton(interaction);
+        await this.player.RepeatButton(interaction);
         break;
     }
   }

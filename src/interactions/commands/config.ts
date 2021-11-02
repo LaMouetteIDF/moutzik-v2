@@ -1,9 +1,13 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { CommandsName, ConfigSubCommandsNameOption } from '../commands';
+import {
+  CommandsName,
+  ConfigOptionSubCommandsName,
+  ConfigSubGroupeCommandsName,
+} from '../commands';
 
 const COMMAND = new SlashCommandBuilder();
 
-COMMAND.setName(CommandsName.Config).setDescription(
+COMMAND.setName(CommandsName.CONFIG).setDescription(
   'Configuration général du lecteur',
 );
 
@@ -11,10 +15,18 @@ COMMAND.addSubcommandGroup((subcommandGroup) =>
   subcommandGroup
     .setName('player')
     .setDescription('Lecteur de musique')
-    .addSubcommand((subcommand) =>
-      subcommand.setName('init').setDescription('Initialisation du lecteur'),
+    .addSubcommand((subcommandGroup) =>
+      subcommandGroup
+        .setName(ConfigSubGroupeCommandsName.INIT)
+        .setDescription('Initialisation du player'),
     ),
 );
+
+// COMMAND.addSubcommandGroup((subcommandGroup) =>
+//   subcommandGroup
+//     .setName(ConfigSubGroupeCommandsName.INIT)
+//     .setDescription('Initialisation du player'),
+// );
 
 COMMAND.addSubcommandGroup((subcommandGroup) =>
   subcommandGroup
@@ -22,7 +34,7 @@ COMMAND.addSubcommandGroup((subcommandGroup) =>
     .setDescription('General options')
     .addSubcommand((subcommand) =>
       subcommand
-        .setName(ConfigSubCommandsNameOption.PlayerChannel)
+        .setName(ConfigOptionSubCommandsName.PLAYER_CHANNEL)
         .setDescription('Set player view channel')
         .addChannelOption((input) =>
           input
@@ -33,7 +45,7 @@ COMMAND.addSubcommandGroup((subcommandGroup) =>
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName(ConfigSubCommandsNameOption.VoiceChannel)
+        .setName(ConfigOptionSubCommandsName.VOICE_CHANNEL)
         .setDescription('Set voice channel')
         .addChannelOption((input) =>
           input
@@ -44,7 +56,7 @@ COMMAND.addSubcommandGroup((subcommandGroup) =>
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName(ConfigSubCommandsNameOption.VoiceChannelLock)
+        .setName(ConfigOptionSubCommandsName.VOICE_CHANNEL_LOCK)
         .setDescription('Lock voice channel')
         .addBooleanOption((input) =>
           input
@@ -55,7 +67,7 @@ COMMAND.addSubcommandGroup((subcommandGroup) =>
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName(ConfigSubCommandsNameOption.LogChannel)
+        .setName(ConfigOptionSubCommandsName.LOG_CHANNEL)
         .setDescription('Set logChannel')
         .addChannelOption((input) =>
           input
@@ -66,7 +78,7 @@ COMMAND.addSubcommandGroup((subcommandGroup) =>
     )
     .addSubcommand((subcommand) =>
       subcommand
-        .setName(ConfigSubCommandsNameOption.Logging)
+        .setName(ConfigOptionSubCommandsName.LOGGING)
         .setDescription('active logging')
         .addBooleanOption((input) =>
           input

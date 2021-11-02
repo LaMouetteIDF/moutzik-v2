@@ -3,7 +3,7 @@ import { CommandsName } from '../commands';
 
 const COMMAND = new SlashCommandBuilder();
 
-COMMAND.setName(CommandsName.Play).setDescription(
+COMMAND.setName(CommandsName.PLAY).setDescription(
   'Lire une piste ou un lien YT',
 );
 

@@ -7,6 +7,7 @@ import {
 } from 'ytdl-core';
 
 import * as ytpl from 'ytpl';
+import { Providers } from '.';
 
 export interface YTParseURL {
   url: string;
@@ -61,6 +62,7 @@ export class YoutubePlug {
     const thumbnail = item.videoDetails.thumbnails.pop();
 
     return new Track(
+      Providers.YOUTUBE,
       item.videoDetails.video_url,
       item.videoDetails.title,
       thumbnail ? thumbnail.url : '',

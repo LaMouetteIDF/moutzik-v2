@@ -13,10 +13,12 @@ import type { GuildConfigItem, GuildItem } from './type';
 import { plainToClass } from 'class-transformer';
 import { Playlist } from './schemas/playlist.schema';
 import { Snowflake } from 'discord.js';
+import { Playlists } from './schemas/playlists.schema';
 
 @Injectable()
 export class StoreService implements OnApplicationBootstrap {
   private guilds = new Map<string, GuildItem>();
+  private _itemsAreAlreadyFetch = false;
 
   constructor(
     @InjectModel(Guild.name) private guildModel: Model<GuildDocument>,
@@ -24,27 +26,45 @@ export class StoreService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap() {
+    // const guildDatas = await this.guildModel.find().exec();
+    // for (const guildData of guildDatas) {
+    //   guildData.playlist = plainToClass(Playlist, guildData.playlist);
+    //   this.guilds.set(guildData.guildId, guildData);
+    // }
+    // setInterval(async () => {
+    //   for (const item of this.guilds.values()) {
+    //     item.markModified('playlist.index');
+    //     item.markModified('playlist.repeat');
+    //     await item.save();
+    //   }
+    // }, 1_000 * 60 * 5);
+    // // Emit End FAKE
+    // // A CHANGER !!!!!!!!!!!!!!!
+    // this.eventEmitter.emit('store.ready');
+  }
+
+  private async _fetchAllItems() {
+    if (this._itemsAreAlreadyFetch) return;
     const guildDatas = await this.guildModel.find().exec();
     for (const guildData of guildDatas) {
-      guildData.playlist = plainToClass(Playlist, guildData.playlist);
+      guildData.playlists = plainToClass(Playlists, guildData.playlists);
+
+      console.log(guildData.playlists.list[0].getAllTracks);
       this.guilds.set(guildData.guildId, guildData);
     }
 
     setInterval(async () => {
       for (const item of this.guilds.values()) {
-        item.markModified('playlist.index');
-        item.markModified('playlist.repeat');
+        item.markModified('playlists');
         await item.save();
       }
     }, 1_000 * 60 * 5);
 
-    // Emit End FAKE
-    // A CHANGER !!!!!!!!!!!!!!!
-
-    this.eventEmitter.emit('store.ready');
+    this._itemsAreAlreadyFetch = true;
   }
 
-  getAll() {
+  async getAll() {
+    await this._fetchAllItems();
     return this.guilds.values();
   }
 

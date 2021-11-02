@@ -1,10 +1,10 @@
 import { Config } from './schemas/config.schema';
-import { Playlist } from './schemas/playlist.schema';
+import { Playlists } from './schemas/playlists.schema';
 
 export type GuildItem = {
   guildId: string;
   config: Config;
-  playlist: Playlist;
+  playlists: Playlists;
   save(): Promise<GuildItem>;
   markModified(path: string): void;
 };

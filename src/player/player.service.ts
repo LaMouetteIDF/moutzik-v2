@@ -8,6 +8,8 @@ import {
   Snowflake,
 } from 'discord.js';
 import { ClientService } from 'src/client/client.service';
+import { TrackListSubCommandsName } from 'src/interactions/commands';
+import { Playlist } from 'src/store/schemas/playlist.schema';
 import { Track } from 'src/store/schemas/track.schema';
 import { StoreService } from 'src/store/store.service';
 import { GuildItem } from 'src/store/type';
@@ -17,9 +19,12 @@ import { PlayerSystem } from './player.system';
 import { SimplePlayerStatus } from './simple-player';
 import { TrackService } from './track.service';
 
+const MAX_LENGTH_TITLE_IN_EMBED = 70;
+
 @Injectable()
 export class PlayerService {
   guildsPlayer: Map<Snowflake, PlayerSystem>;
+  private _playerIsInit = false;
 
   constructor(
     private client: ClientService,
@@ -30,67 +35,61 @@ export class PlayerService {
     this.guildsPlayer = new Map<Snowflake, PlayerSystem>();
   }
 
-  private async _newGuildPlayer(guildStore: GuildItem) {
-    const guild = await this.client.guilds.fetch(guildStore.guildId);
+  private async _newGuildPlayer(guildStoreItem: GuildItem) {
+    const guild = await this.client.guilds.fetch(guildStoreItem.guildId);
 
     if (!guild) {
-      console.error(`Guild ${guildStore.guildId} not found on Store !`);
+      console.error(`Guild ${guildStoreItem.guildId} not found on Store !`);
       return;
     }
 
-    const guildPlayer = new PlayerSystem(
-      guildStore.guildId,
+    const guildPlayerItem = new PlayerSystem(
+      guildStoreItem.guildId,
       guild,
-      guildStore,
+      guildStoreItem,
       guild.voiceAdapterCreator,
       this.trackService,
     );
 
-    this.guildsPlayer.set(guildStore.guildId, guildPlayer);
-    this.eventEmitter.emitAsync('guildPlayer.newitem', guildPlayer);
+    this.guildsPlayer.set(guildStoreItem.guildId, guildPlayerItem);
+    return guildPlayerItem;
   }
 
-  @OnEvent('client.ready', { async: true })
-  onClientReady() {
-    for (const guildStore of this.store.getAll()) {
+  async init() {
+    if (this._playerIsInit) return;
+    for (const guildStore of await this.store.getAll()) {
       this._newGuildPlayer(guildStore);
     }
-    this.eventEmitter.emit('player.ready', this.guildsPlayer.values());
+    this._playerIsInit = true;
   }
 
-  newGuildPlayer(guildStore: GuildItem) {
-    this._newGuildPlayer(guildStore);
+  async newGuildPlayer(guildStore: GuildItem) {
+    await this._newGuildPlayer(guildStore);
   }
 
   async PlayCommand(interaction: CommandInteraction) {
-    await interaction.deferReply({ ephemeral: true });
     const url = interaction.options.getString('youtube-url', false);
     const trackId = interaction.options.getString('track-id', false);
-    try {
-      if (!url && !trackId)
-        throw new Error("Aucun argument n'est passer en paramètre !");
-      if (trackId) {
-        return; // CODE À COMPLÈTER ICI !!
-      }
 
-      const urlIsValide = this.trackService.isValidURL(url);
-      if (!urlIsValide) return; // ERREUR À METTRE ICI !!
-
-      const track = await this.trackService.getTrackFromUrl(url);
-      // if (Array.isArray(track)) return;
-
-      const guildPlayer = this.guildsPlayer.get(interaction.guildId);
-      if (!guildPlayer) throw 'server not initialized';
-
-      await ConnectionToChannel(guildPlayer, interaction.user.id);
-
-      if (!(await guildPlayer.playWithTrack(track)))
-        throw ErrorType.ErrorOnStartPlaying;
-      interaction.editReply('OK !');
-    } catch (e) {
-      console.error(e);
-      interaction.editReply(`Error: ${e}`);
+    if (!url && !trackId)
+      throw new Error("Aucun argument n'est passer en paramètre !");
+    if (trackId) {
+      return; // CODE À COMPLÈTER ICI !!
     }
+
+    const urlIsValide = this.trackService.isValidURL(url);
+    if (!urlIsValide) return; // ERREUR À METTRE ICI !!
+
+    const track = await this.trackService.getTrackFromUrl(url);
+
+    const guildPlayer = this.guildsPlayer.get(interaction.guildId);
+    if (!guildPlayer) throw 'server not initialized';
+
+    await ConnectionToChannel(guildPlayer, interaction.user.id);
+
+    if (!(await guildPlayer.playWithTrack(track)))
+      throw ErrorType.ErrorOnStartPlaying;
+    interaction.editReply('OK !');
   }
 
   async AddCommand(interaction: CommandInteraction) {
@@ -117,6 +116,138 @@ export class PlayerService {
     }
   }
 
+  async TrackListCommand(interaction: CommandInteraction) {
+    const guildPlayer = this.guildsPlayer.get(interaction.guildId);
+    const subcommand = interaction.options.getSubcommand();
+    const playlistName = interaction.options.getString('playlist', false);
+
+    function getNameOfPlaylist(playlist: Playlist) {
+      if (playlist.name == 'DEFAULT') return 'par defaut';
+      return `"${playlist.name}"`;
+    }
+
+    function getNameOfPlaylistForTitleEmbed(playlist: Playlist) {
+      if (playlist.name == 'DEFAULT') return 'Par default';
+      else return `**Nom :** ${playlist.name}`;
+    }
+
+    switch (subcommand) {
+      case TrackListSubCommandsName.SHOW: {
+        let playlist: Playlist;
+
+        if (playlistName) {
+          const list = guildPlayer.playlists.get(playlistName);
+          if (!list) {
+            interaction.editReply("La liste de lecture n'existe pas !");
+            return;
+          }
+          playlist = list;
+        } else playlist = guildPlayer.playlists.currentPlaylist;
+
+        const tracks = playlist.getAllTracks();
+
+        let responseList = '';
+
+        for (const index in tracks) {
+          const id = parseInt(index) + 1;
+          const title = tracks[index].title;
+          const url = tracks[index].url;
+          responseList += `**[${id})  ${
+            title.length > MAX_LENGTH_TITLE_IN_EMBED
+              ? title.substr(0, 60) + '...'
+              : title
+          }](${url})**\n`;
+        }
+
+        // responseList += `${playlist.tracks.length} piste(s)`;
+
+        const embedMessage = new MessageEmbed()
+          .setColor('GREEN')
+          .setTitle('Liste de lecture :')
+          .setDescription(getNameOfPlaylistForTitleEmbed(playlist))
+          .addField('**Pistes :**', responseList, false)
+          .addField('Nombre de piste :', `${playlist.tracks.length}`, true);
+
+        await interaction.editReply({ embeds: [embedMessage] });
+        break;
+      }
+      case TrackListSubCommandsName.ADD: {
+        const url = interaction.options.getString('youtube-url', true);
+        if (!this.trackService.isValidURL(url)) throw new Error('URL invalide');
+
+        const tracks = await this.trackService.getTrackFromUrl(url);
+
+        let playlist: Playlist;
+
+        if (playlistName) {
+          if (!guildPlayer.playlists.has(playlistName)) {
+            guildPlayer.playlists.add(playlistName).add(tracks);
+            guildPlayer.updateView();
+            await interaction.editReply(
+              `La playlist "${playlistName}" à été créé et la piste(s) à bien été ajouter !`,
+            );
+            return;
+          }
+        } else {
+          playlist = guildPlayer.playlists.currentPlaylist;
+          playlist.add(tracks);
+          guildPlayer.updateView();
+          await interaction.editReply(
+            `La piste(s) à bien été ajouter à la liste de lecture ${getNameOfPlaylist(
+              playlist,
+            )} !`,
+          );
+        }
+
+        break;
+      }
+      case TrackListSubCommandsName.REMOVE: {
+        const trackId = interaction.options.getInteger('track-id', true);
+
+        let playlist: Playlist;
+
+        if (playlistName) {
+          if (!guildPlayer.playlists.has(playlistName)) {
+            throw new Error("La liste de lecture n'existe pas !");
+          }
+          playlist = guildPlayer.playlists.get(playlistName);
+          if (!playlist.remove(trackId))
+            throw new Error("La piste n'existe pas !");
+        } else {
+          playlist = guildPlayer.playlists.currentPlaylist;
+          if (!playlist.remove(trackId))
+            throw new Error("La piste n'existe pas !");
+        }
+        guildPlayer.updateView();
+        await interaction.editReply(
+          `La piste à bien été supprimer de la liste de lecture ${getNameOfPlaylist(
+            playlist,
+          )}`,
+        );
+        break;
+      }
+      case TrackListSubCommandsName.CLEAR: {
+        let playlist: Playlist;
+        if (playlistName) {
+          if (!guildPlayer.playlists.has(playlistName)) {
+            throw new Error("La liste de lecture n'existe pas !");
+          }
+          playlist = guildPlayer.playlists.get(playlistName);
+          playlist.clear();
+        } else {
+          playlist = guildPlayer.playlists.currentPlaylist;
+          playlist.clear();
+        }
+        await interaction.editReply(
+          `La liste de le lecture ${getNameOfPlaylist(
+            playlist,
+          )} à bien été nettoyer !`,
+        );
+        break;
+      }
+    }
+  }
+
   // BUTTONS
 
   async PlayPauseButton(interaction: ButtonInteraction) {
@@ -130,20 +261,16 @@ export class PlayerService {
       const guildPlayer = this.guildsPlayer.get(guildId);
       if (!guildPlayer) throw 'server not initialized';
 
-      const player = guildPlayer.player;
-      const playlist = guildPlayer.playlist;
-
-      switch (player.status) {
+      switch (guildPlayer.player.status) {
         case SimplePlayerStatus.Play:
-          if (!player.pause()) throw 'Error to start music';
+          if (!guildPlayer.pause()) throw 'Error to start music';
           break;
         case SimplePlayerStatus.Pause:
-          if (!player.resume()) throw 'Error to start music';
+          if (!guildPlayer.resume()) throw 'Error to start music';
           break;
         case SimplePlayerStatus.Stop:
-          const track = playlist.tracks[playlist.index];
           await ConnectionToChannel(guildPlayer, interaction.user.id);
-          if (!(await player.play(track))) throw 'Error to start music';
+          if (!(await guildPlayer.play())) throw 'Error to start music';
           break;
       }
     } catch (e) {

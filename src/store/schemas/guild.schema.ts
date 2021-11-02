@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { Config } from './config.schema';
-import { Playlist } from './playlist.schema';
+import { Playlists } from './playlists.schema';
 
 export type GuildDocument = Guild & Document;
 
@@ -13,12 +13,12 @@ export class Guild {
   @Prop()
   config: Config;
 
-  @Prop({ type: Playlist })
-  playlist: Playlist;
+  @Prop({ type: Playlists })
+  playlists: Playlists;
 
   constructor() {
     this.config = new Config();
-    this.playlist = new Playlist();
+    this.playlists = new Playlists();
   }
 }
 

@@ -5,7 +5,9 @@ import { Track } from './track.schema';
 @Schema()
 export class Playlist {
   @Prop()
-  index: number;
+  name: string;
+
+  private index: number;
 
   @Prop()
   repeat: RepeatState;
@@ -72,7 +74,10 @@ export class Playlist {
   }
 
   getNextTacksList(numberItem = 5, force = false) {
-    if (this.repeat !== RepeatState.ALL && this.index == this.tracks.length - 1)
+    if (
+      this.tracks.length == 0 ||
+      (this.repeat !== RepeatState.ALL && this.index == this.tracks.length - 1)
+    )
       return [];
 
     const nextTracks = this.tracks
@@ -93,7 +98,12 @@ export class Playlist {
     return nextTracks.slice(0, numberItem);
   }
 
-  constructor() {
+  getAllTracks() {
+    return this.tracks;
+  }
+
+  constructor(name: string) {
+    this.name = name;
     this.index = 0;
     this.repeat = RepeatState.NONE;
     this.tracks = [];

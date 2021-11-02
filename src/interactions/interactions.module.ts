@@ -7,8 +7,6 @@ import { InteractionsService } from './interactions.service';
 // COMMANDS  import
 import ConfigCommand from './commands/config';
 import PlayCommand from './commands/play';
-import AddCommand from './commands/add';
-import RemoveCommand from './commands/remove';
 import StopCommand from './commands/stop';
 import ListCommand from './commands/list';
 import { ConfigModule } from 'src/config/config.module';
@@ -19,15 +17,13 @@ import { ConfigModule } from 'src/config/config.module';
     InteractionsService,
     {
       provide: 'COMMANDS',
-      useValue: [
-        ConfigCommand,
-        PlayCommand,
-        AddCommand,
-        RemoveCommand,
-        StopCommand,
-        ListCommand,
-      ],
+      useValue: [ConfigCommand, PlayCommand, ListCommand, StopCommand],
+    },
+    {
+      provide: 'CONFI_COMMAND',
+      useValue: [ConfigCommand],
     },
   ],
+  exports: [InteractionsService],
 })
 export class InteractionsModule {}

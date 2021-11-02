@@ -6,7 +6,7 @@ import {
   TextChannel,
   VoiceChannel,
 } from 'discord.js';
-import { ConfigSubCommandsNameOption } from 'src/interactions/commands';
+import { ConfigOptionSubCommandsName } from 'src/interactions/commands';
 import { PlayerService } from 'src/player/player.service';
 import { StoreService } from 'src/store/store.service';
 import { GuildConfigItem } from 'src/store/type';
@@ -56,7 +56,7 @@ export class ConfigService {
     const subcommand = interaction.options.getSubcommand();
 
     switch (subcommand) {
-      case ConfigSubCommandsNameOption.PlayerChannel:
+      case ConfigOptionSubCommandsName.PLAYER_CHANNEL:
         {
           const channel = interaction.options.getChannel('channel', true);
           if (channel instanceof TextChannel) {
@@ -65,7 +65,7 @@ export class ConfigService {
         }
         break;
 
-      case ConfigSubCommandsNameOption.VoiceChannel:
+      case ConfigOptionSubCommandsName.VOICE_CHANNEL:
         {
           const channel = interaction.options.getChannel('channel', true);
           if (channel instanceof VoiceChannel) {
@@ -74,14 +74,14 @@ export class ConfigService {
         }
         break;
 
-      case ConfigSubCommandsNameOption.VoiceChannelLock:
+      case ConfigOptionSubCommandsName.VOICE_CHANNEL_LOCK:
         {
           const value = interaction.options.getBoolean('boolean', true);
           guildItem.config.voiceChannelLock = value;
         }
         break;
 
-      case ConfigSubCommandsNameOption.LogChannel:
+      case ConfigOptionSubCommandsName.LOG_CHANNEL:
         {
           const channel = interaction.options.getChannel('channel', true);
           if (channel instanceof TextChannel) {
@@ -90,7 +90,7 @@ export class ConfigService {
         }
         break;
 
-      case ConfigSubCommandsNameOption.Logging:
+      case ConfigOptionSubCommandsName.LOGGING:
         {
           const value = interaction.options.getBoolean('boolean', true);
           guildItem.config.logging = value;
