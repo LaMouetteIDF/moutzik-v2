@@ -31,7 +31,7 @@
     "@nestjs/event-emitter": "^1.0.0",
     "@nestjs/mongoose": "^8.0.1",
     "class-transformer": "^0.4.0",
-    "discord-api-types": "^0.23.1",
+    "discord-api-types": "^0.25.2",
     "discord.js": "^13.1.0",
     "execa": "^5.1.1",
     "ffmpeg-static": "^4.4.0",
